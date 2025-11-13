@@ -12,4 +12,14 @@ const getTestData = async () => {
   return response.data;
 };
 
-export { getTestData };
+const getDevice = async () => {
+  const response = await apiClient.get("/api/devices");
+  return response.data;
+};
+
+const getSniff = async () => {
+  const response = await apiClient.get("/api/start-sniffing");
+  return response.data;
+};
+
+export { getTestData, getDevice, getSniff };

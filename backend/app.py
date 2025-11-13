@@ -1,9 +1,12 @@
 # app.py
 # 位于 backend/app.py
 
+from ipaddress import ip_address
 import sys
 from flask import Flask, jsonify
-from flask_cors import CORS 
+from flask_cors import CORS
+import psutil
+import scapy.all as scapy
 
 # --- 1. 初始化 Flask ---
 app = Flask(__name__)
@@ -25,31 +28,47 @@ def api_test():
 @app.route("/api/start-sniffing")
 def api_start_sniffing():
     print("LOG: /api/start-sniffing was hit")
-    # TODO: 在这里加入 scapy 的真实抓包逻辑
-    
-    # "降维"的假数据：
-    fake_data = {
-        "status": "Sniffing complete",
-        "packets_found": 5,
-        "summary": [
-            "192.168.1.1 -> 8.8.8.8 TCP",
-            "192.168.1.1 -> 1.1.1.1 UDP",
-        ]
-    }
-    return jsonify(fake_data)
+    real_summary = []
+    try:
+        packets = scapy.sniff(count = 5, timeout = 5)
+
+        for pkt in packets:
+            real_summary.append(pkt.summary())
+
+        return jsonify({
+            "status": "Sniffing complete",
+            "packets_found": len(packets),
+            "summary": real_summary
+        })
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return jsonify({
+            "error": "Sniffing failed. Did you run with 'sudo'?",
+            "details": str(e)
+        }), 500
 
 # 模块 5: 网络设备管理
 @app.route("/api/devices")
 def api_get_devices():
     print("LOG: /api/devices was hit")
-    # TODO: 在这里加入 psutil 的真实逻辑
-    
-    # "降维"的假数据：
-    fake_devices = [
-        {"id": "en0", "name": "Wi-Fi (en0)", "ip": "192.168.1.10"},
-        {"id": "eth0", "name": "Ethernet (eth0)", "ip": "Not Connected"},
-    ]
-    return jsonify(fake_devices)
+    all_interfaces = psutil.net_if_addrs()
+    real_devices = []
+
+    for if_name, addresses in all_interfaces.items():
+        ip_address = None
+        for addr in addresses:
+            if addr.family == 2:
+                ip_address = addr.address
+                break
+        
+        if ip_address and if_name != "lo0":
+            real_devices.append({
+                "id": if_name,
+                "name": f"{if_name} Interface", # (一个简单的名字)
+                "ip": ip_address
+            })
+
+    return jsonify(real_devices)
 
 
 # --- 4. 启动服务器 ---
