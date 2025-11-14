@@ -3,7 +3,7 @@
 
 from ipaddress import ip_address
 import sys
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import psutil
 import scapy.all as scapy
@@ -47,7 +47,7 @@ def api_start_sniffing():
             "details": str(e)
         }), 500
 
-# 模块 5: 网络设备管理
+# 模块 2: 网络设备管理
 @app.route("/api/devices")
 def api_get_devices():
     print("LOG: /api/devices was hit")
@@ -69,6 +69,22 @@ def api_get_devices():
             })
 
     return jsonify(real_devices)
+
+# --- 模块 3: 用户登录模拟 ---
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    print("LOG: /api/login was hit")
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+    if username == "admin" and password == "123456":
+        return jsonify({
+            "message": "Login successful",
+            "user": {"username": "admin", "role": "admin"},
+            "token": "fake-jwt-token-for-admin-user"
+        })
+    else:
+        return jsonify({"error": "Invalid username or password"}), 401
 
 
 # --- 4. 启动服务器 ---

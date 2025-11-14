@@ -1,47 +1,21 @@
-import { Layout, Menu, Typography } from "antd";
-import React from "react";
+import DashBoardLayout from "@/layouts/DashboardLayout";
+import DashBoard from "@/pages/dashBoardPage";
+import UserLoginPage from "@/pages/userLoginPage";
 
-import GetDevices from "@/components/getDevices";
-import GetSniff from "@/components/getSniff";
-
-const { Header, Content, Footer } = Layout;
-const { Title } = Typography;
+import { Routes, Route, Navigate } from "react-router-dom";
 
 function App() {
+  const isLoginedIn = Boolean(localStorage.getItem("token"));
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          backgroundColor: "#001529",
-        }}
+    <Routes>
+      <Route path="/login" element={<UserLoginPage />} />
+      <Route
+        path="/"
+        element={isLoginedIn ? <DashBoard /> : <Navigate to="/login" />}
       >
-        <Title style={{ color: "white", margin: 0 }} level={3}>
-          网络性能检测工具
-        </Title>
-      </Header>
-
-      <Content style={{ padding: "0 48px" }}>
-        <div
-          style={{
-            background: "#fff",
-            padding: 24,
-            minHeight: 280,
-            marginTop: "24px",
-          }}
-        >
-          <GetDevices />
-          <GetSniff />
-        </div>
-      </Content>
-
-      <Footer style={{ textAlign: "center" }}>
-        网络系统实践 ©{new Date().getFullYear()} Created by OceanZen
-      </Footer>
-    </Layout>
+        <Route index element={<DashBoardLayout />} />
+      </Route>
+    </Routes>
   );
 }
-
 export default App;

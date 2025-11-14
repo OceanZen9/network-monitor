@@ -1,4 +1,4 @@
-import { getDevice } from "@/services/test";
+import { getDevice } from "@/services/api";
 import { useEffect, useState } from "react";
 import { Table, Spin, Typography } from "antd";
 

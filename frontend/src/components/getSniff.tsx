@@ -1,4 +1,4 @@
-import { getSniff } from "@/services/test";
+import { getSniff } from "@/services/api";
 import { useEffect, useState } from "react";
 import { List, Typography } from "antd";
 
