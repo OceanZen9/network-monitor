@@ -34,8 +34,8 @@ export default function RealtimeTrafficChart() {
       setIsConneted(false);
     });
 
-    socket.on("traffic_rate", (message: { rates: TrafficRate[] }) => {
-      const time = new Date().toLocaleDateString();
+    socket.on("traffic_data", (message: { rates: TrafficRate[] }) => {
+      const time = new Date().toLocaleTimeString();
       const newDataPoints: ChartsDataPoint[] = [];
       message.rates.forEach((rate) => {
         newDataPoints.push({
@@ -65,7 +65,7 @@ export default function RealtimeTrafficChart() {
 
   const config = {
     data: trafficData,
-    xFilled: "tiem",
+    xFilled: "time",
     yFilled: "value",
     seriesFilled: "category",
     yAxis: {

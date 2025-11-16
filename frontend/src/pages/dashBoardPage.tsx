@@ -1,7 +1,7 @@
 import GetDevices from "@/components/getDevices";
 import GetSniff from "@/components/getSniff";
 import RealtimeTrafficChart from "@/components/RealtimeTrafficChart";
-import { Divider, Tabs } from "antd";
+import { Tabs } from "antd";
 
 const { TabPane } = Tabs;
 

@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 # --- 2. 配置 CORS (关键) ---
 # 允许来自你 Vite 开发服务器 (http://localhost:5173) 的请求
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 # --- 配置SocketIO ---
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
