@@ -26,11 +26,6 @@ const getDevice = async () => {
   return response.data;
 };
 
-const getSniff = async () => {
-  const response = await apiClient.get("/api/start-sniffing");
-  return response.data;
-};
-
 const login = async (
   username: string,
   password: string
@@ -46,4 +41,4 @@ const login = async (
   }
 };
 
-export { getTestData, getDevice, getSniff, login };
+export { getTestData, getDevice, login };

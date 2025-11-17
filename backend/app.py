@@ -16,25 +16,10 @@ app = Flask(__name__)
 
 # --- 2. 配置 CORS (关键) ---
 # 允许来自你 Vite 开发服务器 (http://localhost:5173) 的请求
-CORS(app, resources={
-    r"/*": {
-        "origins": ["http://localhost:5173"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
-        "supports_credentials": True
-    }
-})
+CORS(app, origins="http://localhost:5173", supports_credentials=True)
 
 # --- 配置SocketIO ---
-socketio = SocketIO(
-    app,
-    cors_allowed_origins=["http://localhost:5173"],
-    async_mode='threading',
-    logger=True,
-    engineio_logger=True,
-    ping_timeout=60,
-    ping_interval=25
-)
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
 
 # --- 用于存储上次流量数据的全局变量 ---
 _last_io_counters = {}
@@ -43,27 +28,27 @@ _last_io_counters = {}
 
 # 模块 1: 网络数据包分析 (核心)
 # (我们先用“假数据”打通链路)
-@app.route("/api/start-sniffing")
-def api_start_sniffing():
-    print("LOG: /api/start-sniffing was hit")
-    real_summary = []
+def packet_callback(packet):
+    """
+    这是一个简单的回调函数，当捕获到数据包时调用。
+    它会打印数据包的摘要信息。
+    """
+    print(f"Captured Packet: {packet.summary()}")
     try:
-        packets = scapy.sniff(count = 5, timeout = 5)
-
-        for pkt in packets:
-            real_summary.append(pkt.summary())
-
-        return jsonify({
-            "status": "Sniffing complete",
-            "packets_found": len(packets),
-            "summary": real_summary
-        })
+        summary = packet.summary()
+        if summary:
+            socketio.emit('new_packet', {'summary': summary})
     except Exception as e:
-        print(f"ERROR: {e}")
-        return jsonify({
-            "error": "Sniffing failed. Did you run with 'sudo'?",
-            "details": str(e)
-        }), 500
+        pass
+
+def monitor_packets_task():
+    """
+    一个后台任务，用于捕获网络数据包并调用回调函数。
+    """
+    try:
+        scapy.sniff(prn=packet_callback, store=False)
+    except Exception as e:
+        print(f"Error in packet sniffing: {e}")
 
 # 模块 2: 网络设备管理
 @app.route("/api/devices")
@@ -147,7 +132,7 @@ def monitor_traffic_task():
         rates = get_traffic_rates()
         if rates:
             socketio.emit('traffic_data', {'rates': rates})
-        socketio.sleep(1)  # 每 1 秒更新一次
+        socketio.sleep(3)  # 每 1 秒更新一次
 
 @socketio.on('connect')
 def handle_connect():
@@ -155,10 +140,12 @@ def handle_connect():
      当客户端连接时启动流量监控任务"""
     print('Client connected')
     socketio.start_background_task(target=monitor_traffic_task)
+    socketio.start_background_task(target=monitor_packets_task)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     print("LOG: Client disconnected from WebSocket")
+    
 
 # --- 启动服务器 ---
 if __name__ == '__main__':
@@ -168,4 +155,4 @@ if __name__ == '__main__':
     print("Note: Scapy sniffing may require 'sudo' to run this script later,")
     print("      but for now, the server is running.")
     
-    socketio.run(app, debug=True, port=5000)
+    socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)

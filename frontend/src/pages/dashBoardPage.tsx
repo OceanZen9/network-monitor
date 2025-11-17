@@ -15,7 +15,7 @@ function DashBoard() {
         <TabPane tab="Device List" key="2">
           <GetDevices />
         </TabPane>
-        <TabPane tab="Sniff Packets (Demo)" key="3">
+        <TabPane tab="Sniff Packets" key="3">
           <GetSniff />
         </TabPane>
       </Tabs>

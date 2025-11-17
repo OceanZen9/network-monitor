@@ -1,57 +1,54 @@
-import { getSniff } from "@/services/api";
 import { useEffect, useState } from "react";
-import { List, Typography } from "antd";
+import { Empty, List, Typography } from "antd";
+import { io } from "socket.io-client";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
-interface SniffData {
-  status: string;
-  packets_found: number;
-  summary: string[];
-}
+const MAX_PACKETS = 10;
 
 export default function GetSniff() {
-  const [data, setData] = useState<SniffData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [packetSummaries, setPacketSummaries] = useState<string[]>([]);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getSniff();
-        setData(response);
-      } catch (error) {
-        console.error("Error fetching sniff data:", error);
-      } finally {
-        setLoading(false);
-      }
+    const socket = io("http://127.0.0.1:5000");
+
+    socket.on("connect", () => {
+      console.log("Connected to backend server");
+      setIsConnected(true);
+    });
+    socket.on("disconnect", () => {
+      console.log("Disconnected from backend server");
+      setIsConnected(false);
+    });
+
+    socket.on("new_packet", (message: { summary: string }) => {
+      setPacketSummaries((prev_summaries) => {
+        const newPacketSummaries = [message.summary, ...prev_summaries];
+        return newPacketSummaries.slice(0, MAX_PACKETS);
+      });
+    });
+    return () => {
+      socket.disconnect();
     };
-    fetchData();
-  }, []);
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  });
   return (
     <div style={{ padding: "24px" }}>
       <Title level={2} style={{ marginTop: "24px" }}>
-        Sniff Data from Backend:
-      </Title>{" "}
-      {data && (
-        <>
-          <Text strong>Status:</Text>
-          <Text>{data.status}</Text>
-          <br />
-          <Text strong>Packets Found: </Text>
-          <Text>{data.packets_found}</Text>
+        Real-time Packet Sniffer{" "}
+        {isConnected ? "(Connected)" : "(Disconnected)"}
+      </Title>
 
-          {/* 用 antd List 来显示那组 "summary" 数组 */}
-          <List
-            header={<div>Packet Summary:</div>}
-            bordered
-            dataSource={data.summary}
-            renderItem={(item) => <List.Item>{item}</List.Item>}
-            style={{ marginTop: "16px" }}
-          />
-        </>
-      )}
+      <List
+        header={<div>Live Packet Summary (Newest First):</div>}
+        bordered
+        dataSource={packetSummaries}
+        renderItem={(item, index) => <List.Item key={index}>{item}</List.Item>}
+        style={{ marginTop: "16px", maxHeight: "60vh", overflowY: "auto" }}
+        locale={{
+          emptyText: <Empty description="waiting for packets..." />,
+        }}
+      />
     </div>
   );
 }
