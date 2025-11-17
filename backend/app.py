@@ -16,10 +16,25 @@ app = Flask(__name__)
 
 # --- 2. 配置 CORS (关键) ---
 # 允许来自你 Vite 开发服务器 (http://localhost:5173) 的请求
-CORS(app, origins="http://localhost:5173", supports_credentials=True)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 # --- 配置SocketIO ---
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=["http://localhost:5173"],
+    async_mode='threading',
+    logger=True,
+    engineio_logger=True,
+    ping_timeout=60,
+    ping_interval=25
+)
 
 # --- 用于存储上次流量数据的全局变量 ---
 _last_io_counters = {}
@@ -149,7 +164,7 @@ def handle_disconnect():
 if __name__ == '__main__':
     # 检查是否有管理员权限 (如果 scapy 需要的话)
     # (注意: Flask 开发服务器本身不需要 sudo，但 scapy 需要)
-    print("--- Starting Flask Server (http://localhost:5000) ---")
+    print("--- Starting Flask Server (http://127.0.0.1:5000/) ---")
     print("Note: Scapy sniffing may require 'sudo' to run this script later,")
     print("      but for now, the server is running.")
     

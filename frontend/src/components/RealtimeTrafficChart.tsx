@@ -6,7 +6,7 @@ import { Line } from "@ant-design/charts";
 const { Title } = Typography;
 
 interface TrafficRate {
-  if_name: string;
+  interface: string;
   bytes_sent_sec: number;
   bytes_recv_sec: number;
 }
@@ -23,7 +23,7 @@ export default function RealtimeTrafficChart() {
   const [isConneted, setIsConneted] = useState<boolean>(false);
   const [trafficData, setTrafficData] = useState<ChartsDataPoint[]>([]);
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    const socket = io("http://127.0.0.1:5000");
 
     socket.on("connect", () => {
       console.log("Connected to backend server");
@@ -41,12 +41,12 @@ export default function RealtimeTrafficChart() {
         newDataPoints.push({
           time: time,
           value: rate.bytes_sent_sec,
-          category: `${rate.if_name} - Sent`,
+          category: `${rate.interface} - Sent`,
         });
         newDataPoints.push({
           time: time,
           value: rate.bytes_recv_sec,
-          category: `${rate.if_name} - Received`,
+          category: `${rate.interface} - Received`,
         });
       });
 
@@ -67,27 +67,17 @@ export default function RealtimeTrafficChart() {
     data: trafficData,
     xField: "time",
     yField: "value",
-    seriesFilled: "category",
-    yAxis: {
-      title: {
-        text: "Bytes per Second",
-      },
-      label: {
-        formatter: (v: number) => `${(v / 1024).toFixed(1)} KB/s`,
-      },
-    },
-    legend: {
-      position: "top",
-    },
-    smooth: true,
-    animation: {
-      appear: {
-        animation: false,
-      },
-      update: {
-        animation: false,
+    seriesField: "category",
+    scale: { color: { range: ["#30BF78", "#F4664A", "#FAAD14"] } },
+    axis: {
+      y: {
+        title: {
+          text: "Bytes per Second",
+        },
+        labelFormatter: (v: number) => `${(v / 1024).toFixed(1)} KB/s`,
       },
     },
+    animate: false,
   };
   if (!isConneted) {
     return (
