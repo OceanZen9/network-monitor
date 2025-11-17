@@ -1,7 +1,7 @@
 import { Spin, Typography, Empty } from "antd";
 import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
 import { Line } from "@ant-design/charts";
+import { useSocketStore } from "@/store/socketStore";
 
 const { Title } = Typography;
 
@@ -20,20 +20,11 @@ interface ChartsDataPoint {
 const Max_Data_Points = 60;
 
 export default function RealtimeTrafficChart() {
-  const [isConneted, setIsConneted] = useState<boolean>(false);
+  const { socket, isConnected } = useSocketStore();
   const [trafficData, setTrafficData] = useState<ChartsDataPoint[]>([]);
+
   useEffect(() => {
-    const socket = io("http://127.0.0.1:5000");
-
-    socket.on("connect", () => {
-      console.log("Connected to backend server");
-      setIsConneted(true);
-    });
-    socket.on("disconnect", () => {
-      console.log("Disconnected from backend server");
-      setIsConneted(false);
-    });
-
+    if (!socket) return;
     socket.on("traffic_data", (message: { rates: TrafficRate[] }) => {
       const time = new Date().toLocaleTimeString();
       const newDataPoints: ChartsDataPoint[] = [];
@@ -59,9 +50,9 @@ export default function RealtimeTrafficChart() {
       });
     });
     return () => {
-      socket.disconnect();
+      socket.off("traffic_data");
     };
-  }, []);
+  }, [socket]);
 
   const config = {
     data: trafficData,
@@ -79,14 +70,14 @@ export default function RealtimeTrafficChart() {
     },
     animate: false,
   };
-  if (!isConneted) {
+  if (!isConnected) {
     return (
       <div style={{ padding: "50px", textAlign: "center" }}>
         <Spin tip="Connecting to real-time server..." size="large" />
       </div>
     );
   }
-  if (isConneted && trafficData.length === 0) {
+  if (isConnected && trafficData.length === 0) {
     return (
       <div style={{ padding: "50px", textAlign: "center" }}>
         <Empty description="No traffic data received yet." />
@@ -95,7 +86,7 @@ export default function RealtimeTrafficChart() {
   }
   return (
     <div>
-      <Title level={2}>Real-time Traffic Monito</Title>
+      <Title level={2}>Real-time Traffic Monitor</Title>
       <Line {...config} />
     </div>
   );

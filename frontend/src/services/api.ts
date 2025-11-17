@@ -16,11 +16,6 @@ interface LoginResponse {
   token: string;
 }
 
-const getTestData = async () => {
-  const response = await apiClient.get("/api/test");
-  return response.data;
-};
-
 const getDevice = async () => {
   const response = await apiClient.get("/api/devices");
   return response.data;
@@ -41,4 +36,4 @@ const login = async (
   }
 };
 
-export { getTestData, getDevice, login };
+export { getDevice, login };

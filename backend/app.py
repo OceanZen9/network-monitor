@@ -1,9 +1,7 @@
 # app.py
 # 位于 backend/app.py
 
-import glob
 from ipaddress import ip_address
-import sys
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import psutil
@@ -16,13 +14,17 @@ app = Flask(__name__)
 
 # --- 2. 配置 CORS (关键) ---
 # 允许来自你 Vite 开发服务器 (http://localhost:5173) 的请求
-CORS(app, origins="http://localhost:5173", supports_credentials=True)
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 # --- 配置SocketIO ---
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
+socketio = SocketIO(app, cors_allowed_origins=["http://localhost:5173"])
 
 # --- 用于存储上次流量数据的全局变量 ---
 _last_io_counters = {}
+
+# --- socketio 全局变量 ---
+_traffic_monitoring_task = None
+_packet_monitoring_task = None
 
 # --- 3. 我们的“降维”模块 API ---
 
@@ -139,12 +141,18 @@ def handle_connect():
     """
      当客户端连接时启动流量监控任务"""
     print('Client connected')
-    socketio.start_background_task(target=monitor_traffic_task)
-    socketio.start_background_task(target=monitor_packets_task)
+    global _traffic_monitoring_task, _packet_monitoring_task
+    if not _traffic_monitoring_task:
+        socketio.start_background_task(target=monitor_traffic_task)
+        _traffic_monitoring_task = True
+    if not _packet_monitoring_task:
+        socketio.start_background_task(target=monitor_packets_task)
+        _packet_monitoring_task = True
 
 @socketio.on('disconnect')
 def handle_disconnect():
     print("LOG: Client disconnected from WebSocket")
+
     
 
 # --- 启动服务器 ---

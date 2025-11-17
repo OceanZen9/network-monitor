@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Empty, List, Typography } from "antd";
-import { io } from "socket.io-client";
+import { useSocketStore } from "@/store/socketStore";
 
 const { Title } = Typography;
 
@@ -8,19 +8,10 @@ const MAX_PACKETS = 10;
 
 export default function GetSniff() {
   const [packetSummaries, setPacketSummaries] = useState<string[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const { socket, isConnected } = useSocketStore();
 
   useEffect(() => {
-    const socket = io("http://127.0.0.1:5000");
-
-    socket.on("connect", () => {
-      console.log("Connected to backend server");
-      setIsConnected(true);
-    });
-    socket.on("disconnect", () => {
-      console.log("Disconnected from backend server");
-      setIsConnected(false);
-    });
+    if (!socket) return;
 
     socket.on("new_packet", (message: { summary: string }) => {
       setPacketSummaries((prev_summaries) => {
@@ -29,9 +20,9 @@ export default function GetSniff() {
       });
     });
     return () => {
-      socket.disconnect();
+      socket.off("new_packet");
     };
-  });
+  }, [socket]);
   return (
     <div style={{ padding: "24px" }}>
       <Title level={2} style={{ marginTop: "24px" }}>
