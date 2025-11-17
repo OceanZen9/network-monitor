@@ -65,8 +65,8 @@ export default function RealtimeTrafficChart() {
 
   const config = {
     data: trafficData,
-    xFilled: "time",
-    yFilled: "value",
+    xField: "time",
+    yField: "value",
     seriesFilled: "category",
     yAxis: {
       title: {
