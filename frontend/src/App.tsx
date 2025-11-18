@@ -4,7 +4,7 @@ import UserLoginPage from "@/pages/userLoginPage";
 import { useSocketStore } from "@/store/socketStore";
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 function App() {
   const isLoginedIn = Boolean(localStorage.getItem("token"));
