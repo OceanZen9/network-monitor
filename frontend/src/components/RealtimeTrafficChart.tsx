@@ -24,10 +24,21 @@ export default function RealtimeTrafficChart() {
   const [trafficData, setTrafficData] = useState<ChartsDataPoint[]>([]);
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on("traffic_data", (message: { rates: TrafficRate[] }) => {
+    console.log("🔍 Chart: socket changed, isConnected:", isConnected);
+
+    if (!socket) {
+      console.warn("⚠️ Chart: No socket available");
+      return;
+    }
+
+    console.log("👂 Chart: Setting up traffic_data listener");
+
+    const handleTrafficData = (message: { rates: TrafficRate[] }) => {
+      console.log("📊 Chart: Received traffic data:", message);
+
       const time = new Date().toLocaleTimeString();
       const newDataPoints: ChartsDataPoint[] = [];
+
       message.rates.forEach((rate) => {
         newDataPoints.push({
           time: time,
@@ -48,9 +59,14 @@ export default function RealtimeTrafficChart() {
         );
         return slicedData;
       });
-    });
+    };
+
+    socket.off("traffic_data");
+    socket.on("traffic_data", handleTrafficData);
+
     return () => {
-      socket.off("traffic_data");
+      console.log("🧹 Chart: Cleaning up traffic_data listener");
+      socket.off("traffic_data", handleTrafficData);
     };
   }, [socket]);
 

@@ -14,10 +14,18 @@ app = Flask(__name__)
 
 # --- 2. 配置 CORS (关键) ---
 # 允许来自你 Vite 开发服务器 (http://localhost:5173) 的请求
-CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+CORS(app, 
+     origins=["http://localhost:5173", "http://localhost:5174", 
+              "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+     supports_credentials=True)
 
 # --- 配置SocketIO ---
-socketio = SocketIO(app, cors_allowed_origins=["http://localhost:5173"])
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins=["http://localhost:5173", "http://localhost:5174",
+                          "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    async_mode='threading'
+)
 
 # --- 用于存储上次流量数据的全局变量 ---
 _last_io_counters = {}
@@ -25,20 +33,26 @@ _last_io_counters = {}
 # --- socketio 全局变量 ---
 _traffic_monitoring_task = None
 _packet_monitoring_task = None
+_packet_count = 0  # ✅ 添加包计数器
+_packet_print_interval = 100  # ✅ 每100个包才打印一次
 
 # --- 3. 我们的“降维”模块 API ---
 
 # 模块 1: 网络数据包分析 (核心)
 # (我们先用“假数据”打通链路)
 def packet_callback(packet):
-    """
-    这是一个简单的回调函数，当捕获到数据包时调用。
-    它会打印数据包的摘要信息。
-    """
-    print(f"Captured Packet: {packet.summary()}")
+    """数据包回调函数 - 减少日志输出"""
+    global _packet_count
+    _packet_count += 1
+    
     try:
         summary = packet.summary()
         if summary:
+            # ✅ 只每隔 N 个包打印一次，避免刷屏
+            if _packet_count % _packet_print_interval == 0:
+                print(f"📦 Captured {_packet_count} packets (latest: {summary[:50]}...)")
+            
+            # 但仍然发送所有包到前端
             socketio.emit('new_packet', {'summary': summary})
     except Exception as e:
         pass

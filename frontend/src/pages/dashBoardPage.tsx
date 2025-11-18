@@ -3,22 +3,27 @@ import GetSniff from "@/components/getSniff";
 import RealtimeTrafficChart from "@/components/RealtimeTrafficChart";
 import { Tabs } from "antd";
 
-const { TabPane } = Tabs;
-
 function DashBoard() {
+  const items = [
+    {
+      key: "1",
+      label: "Real-time Traffic",
+      children: <RealtimeTrafficChart />,
+    },
+    {
+      key: "2",
+      label: "Device List",
+      children: <GetDevices />,
+    },
+    {
+      key: "3",
+      label: "Sniff Packets",
+      children: <GetSniff />,
+    },
+  ];
   return (
     <div>
-      <Tabs defaultActiveKey="1">
-        <TabPane tab="Real-time Traffic" key="1">
-          <RealtimeTrafficChart />
-        </TabPane>
-        <TabPane tab="Device List" key="2">
-          <GetDevices />
-        </TabPane>
-        <TabPane tab="Sniff Packets" key="3">
-          <GetSniff />
-        </TabPane>
-      </Tabs>
+      <Tabs defaultActiveKey="1" items={items} />
     </div>
   );
 }

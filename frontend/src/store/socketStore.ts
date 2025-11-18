@@ -8,36 +8,62 @@ interface SocketStore {
   disconnect: () => void;
 }
 
-export const useSocketStore = create<SocketStore>((set) => ({
+let socketInstance: Socket | null = null;
+
+export const useSocketStore = create<SocketStore>((set, get) => ({
   socket: null,
   isConnected: false,
   connect: () => {
-    set((state) => {
-      if (state.socket && state.isConnected) {
-        console.log("⚠️ Socket already exists");
-        return state;
-      }
-      if (state.socket) {
-        console.log("🧹 Cleaning up old socket");
-        state.socket.disconnect();
-      }
-      const socket = io("http://127.0.0.1:5000");
-      console.log("📡 Creating new socket connection");
-      socket.on("connect", () => {
-        console.log("Connected to backend server");
-        set({ isConnected: true });
-      });
-      socket.on("disconnect", () => {
-        console.log("Disconnected from backend server");
-        set({ isConnected: false });
-      });
-      return { socket };
+    // ✅ 如果已有实例且已连接，直接返回
+    if (socketInstance?.connected) {
+      console.log("⚠️ Socket already connected, reusing instance");
+      set({ socket: socketInstance, isConnected: true });
+      return;
+    }
+
+    // ✅ 如果有旧实例但未连接，清理它
+    if (socketInstance) {
+      console.log("🧹 Cleaning up old disconnected socket");
+      socketInstance.removeAllListeners();
+      socketInstance.disconnect();
+      socketInstance = null;
+    }
+
+    console.log("📡 Creating new socket connection to http://127.0.0.1:5000");
+
+    const socket = io("http://127.0.0.1:5000", {
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+      set({ socket, isConnected: true });
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("❌ Socket disconnected:", reason);
+      set({ isConnected: false });
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("🔴 Socket connection error:", error.message);
+      set({ isConnected: false });
+    });
+    set({ socket, isConnected: false });
   },
   disconnect: () => {
-    set((state) => {
-      state.socket?.disconnect();
-      return { socket: null, isConnected: false };
-    });
+    const currentState = get();
+
+    if (currentState.socket) {
+      console.log("🔌 Disconnecting socket...");
+      currentState.socket.removeAllListeners();
+      currentState.socket.disconnect();
+    }
+
+    set({ socket: null, isConnected: false });
   },
 }));
