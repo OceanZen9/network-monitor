@@ -4,3 +4,8 @@ scapy       # 需求 3：用于抓包
 psutil      # 需求 1/2：用于获取设备/流量信息
 flask-socketio  # 新增：用于 WebSocket 实时通信
 eventlet        # 新增：flask-socketio 依赖的异步服务器
+
+flask-sqlalchemy
+flask-migrate
+flask-jwt-extended
+email-validator

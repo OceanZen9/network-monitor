@@ -7,7 +7,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 
 function App() {
-  const isLoginedIn = Boolean(localStorage.getItem("token"));
+  const isLoginedIn = Boolean(localStorage.getItem("access_token"));
   const connect = useSocketStore((state) => state.connect);
   const disconnect = useSocketStore((state) => state.disconnect);
 

@@ -1,24 +1,24 @@
 import psutil
 import time
-from extensions import socketio, _last_io_counters
+from extensions import socketio
+import extensions as ext
 
 def get_traffic_rates():
     """
     一个辅助函数，用于计算每秒的字节速率。
-    它会与全局的 _last_io_counters 进行比较
+    它会与全局的 ext._last_io_counters 进行比较
     """
-    global _last_io_counters
     current_counters = psutil.net_io_counters(pernic=True)
     current_time = time.time()
 
     rates = []
     
-    if not _last_io_counters:
-        _last_io_counters = {"time": current_time, "counters": current_counters}
+    if not ext._last_io_counters:
+        ext._last_io_counters = {"time": current_time, "counters": current_counters}
         return []  # 第一次调用时没有速率数据
     
-    prev_time = _last_io_counters["time"]
-    prev_counters = _last_io_counters["counters"]
+    prev_time = ext._last_io_counters["time"]
+    prev_counters = ext._last_io_counters["counters"]
 
     time_diff = current_time - prev_time
     for if_name, current_status in current_counters.items():
@@ -33,7 +33,7 @@ def get_traffic_rates():
                 "bytes_recv_sec": round(bytes_recv_rate, 2)
             })
     
-    _last_io_counters = {"time": current_time, "counters": current_counters}
+    ext._last_io_counters = {"time": current_time, "counters": current_counters}
     return rates
 
 def monitor_traffic_task():

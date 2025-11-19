@@ -1,6 +1,9 @@
 # backend/routes/auth.py
 
 from flask import Blueprint, jsonify, request
+from models import User
+from extensions import db
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -8,30 +11,57 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """用户登录"""
-    print("LOG: /api/auth/login was hit")
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    
-    if username == "admin" and password == "123456":
-        return jsonify({
-            "message": "Login successful",
-            "user": {"username": "admin", "role": "admin"},
-            "token": "fake-jwt-token-for-admin-user"
-        })
-    else:
+
+    user = User.query.filter_by(username=username).first()
+
+    if user is None or not user.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
+    
+    access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
+    return jsonify({
+        "message": "Login successful",
+        "user": user.to_dict(),
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }), 200
 
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """用户注册（待实现）"""
-    # TODO: 实现注册逻辑
-    return jsonify({"message": "Registration endpoint - coming soon"}), 501
+    """用户注册"""
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
 
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+    
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": "Username already exists"}), 400
+    
+    username = User(username=username)
+    username.set_password(password)
+
+    db.session.add(username)
+    db.session.commit()
+
+    return jsonify({"message": "User created successfully"}), 201
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """用户登出"""
-    # TODO: 实现登出逻辑
     return jsonify({"message": "Logout successful"})
+
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """刷新访问令牌"""
+    current_user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user_id)
+    return jsonify({
+        "access_token": new_access_token
+    }), 200

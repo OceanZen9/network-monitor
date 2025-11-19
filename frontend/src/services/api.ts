@@ -1,4 +1,8 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import type { InternalAxiosRequestConfig } from "axios";
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const apiClient = axios.create({
   baseURL: "http://127.0.0.1:5000/",
@@ -7,33 +11,95 @@ const apiClient = axios.create({
   },
 });
 
-interface LoginRequest {
-  username: string;
-  password: string;
-}
+// 请求拦截器
+apiClient.interceptors.request.use(
+  (config: CustomAxiosRequestConfig) => {
+    // 在请求发送前添加认证令牌
+    const token = localStorage.getItem("access_token");
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: AxiosError) => {
+    return Promise.reject(error);
+  }
+);
+
+// 响应拦截器
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refresh_token");
+        if (!refreshToken) {
+          throw new Error("No refresh token available");
+        }
+
+        // 请求新的访问令牌
+        const { data } = await apiClient.post("/api/auth/refresh", null, {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        });
+
+        localStorage.setItem("access_token", data.access_token);
+
+        // 重新发送原始请求
+        if (originalRequest.headers) {
+          originalRequest.headers[
+            "Authorization"
+          ] = `Bearer ${data.access_token}`;
+        }
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        console.error("Session expired, redirecting to login...", refreshError);
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 interface LoginResponse {
   message: string;
-  token: string;
+  access_token: string;
+  refresh_token: string;
+  user: {
+    username: string;
+  };
 }
 
-const getDevice = async () => {
+export const getDevice = async () => {
   const response = await apiClient.get("/api/devices");
   return response.data;
 };
 
-const login = async (
+export const login = async (
   username: string,
   password: string
 ): Promise<LoginResponse> => {
-  const url = "/api/login";
+  const response = await apiClient.post("/api/auth/login", {
+    username,
+    password,
+  });
+  return response.data;
+};
+
+export const register = async (username: string, password: string) => {
   try {
-    const payload: LoginRequest = { username, password };
-    const response = await apiClient.post<LoginResponse>(url, payload);
-    return response.data;
+    await apiClient.post("/api/auth/register", { username, password });
   } catch (error) {
-    console.error("Login API failed:", error);
+    console.error("Registration failed:", error);
     throw error;
   }
 };
 
-export { getDevice, login };
+export default apiClient;

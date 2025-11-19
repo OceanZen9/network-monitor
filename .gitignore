@@ -2,3 +2,7 @@
 node_modules/
 __pycache__/
 venv/
+# --- Flask 数据库 & 密钥 (Backend Specific) ---
+# 忽略所有的 SQLite 数据库文件
+*.db
+*.sqlite3

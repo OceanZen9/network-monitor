@@ -1,5 +1,7 @@
-import { Card } from "antd";
+import { Tabs, Card } from "antd";
+import { useState } from "react";
 import { LoginForm } from "@/components/loginForm";
+import { RegisterForm } from "@/components/RegisterForm";
 
 const layoutStyle: React.CSSProperties = {
   display: "flex",
@@ -10,16 +12,37 @@ const layoutStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  width: 350,
+  width: 400,
 };
 
-function LoginPage() {
+function UserLoginPage() {
+  const [activeTab, setActiveTab] = useState("login");
+
+  const items = [
+    {
+      key: "login",
+      label: "登录",
+      children: <LoginForm />,
+    },
+    {
+      key: "register",
+      label: "注册",
+      children: <RegisterForm onSuccess={() => setActiveTab("login")} />,
+    },
+  ];
   return (
     <div style={layoutStyle}>
-      <Card title="网络监测工具登录" style={cardStyle}>
-        <LoginForm />
+      <Card style={cardStyle} className="login-card">
+        <h2 style={{ textAlign: "center", marginBottom: 24 }}>
+          Network Monitor
+        </h2>
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key)}
+          items={items}
+        />
       </Card>
     </div>
   );
 }
-export default LoginPage;
+export default UserLoginPage;

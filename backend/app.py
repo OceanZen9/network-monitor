@@ -1,6 +1,8 @@
 from flask import Flask
+from flask_migrate import Migrate
 from config import config
-from extensions import socketio, cors
+from extensions import socketio, cors, jwt, db
+from models import User
 
 # 导入蓝图
 from routes.auth import auth_bp
@@ -19,6 +21,9 @@ def create_app(config_name='default'):
         cors_allowed_origins=app.config['CORS_ORIGINS'],
         async_mode=app.config['SOCKETIO_ASYNC_MODE']
     ) 
+    db.init_app(app)
+    jwt.init_app(app)
+    Migrate(app, db)
 
     # 注册蓝图
     app.register_blueprint(auth_bp)
@@ -28,6 +33,14 @@ def create_app(config_name='default'):
     with app.app_context():
         import routes.monitoring
 
+        # 自动创建表和默认用户
+        db.create_all()
+        if not User.query.filter_by(username="admin").first():
+            print("⚠️  Creating default user: admin / 123456")
+            user = User(username="admin")
+            user.set_password("123456")
+            db.session.add(user)
+            db.session.commit()
 
     return app
 
