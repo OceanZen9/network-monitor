@@ -43,10 +43,10 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
     
-    username = User(username=username)
-    username.set_password(password)
+    user = User(username=username)
+    user.set_password(password)
 
-    db.session.add(username)
+    db.session.add(user)
     db.session.commit()
 
     return jsonify({"message": "User created successfully"}), 201
