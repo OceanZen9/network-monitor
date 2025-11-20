@@ -3,9 +3,9 @@ from models import Threshold
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-thresholds_bp = Blueprint('thresholds_bp', __name__)
+thresholds_bp = Blueprint('thresholds_bp', __name__, url_prefix='/api/thresholds')
 
-@thresholds_bp.route('/thresholds', methods=['POST'])
+@thresholds_bp.route('', methods=['POST'])
 @jwt_required()
 def create_threshold():
     data = request.get_json()
@@ -32,7 +32,7 @@ def create_threshold():
         db.session.rollback()
         return jsonify({"msg": "An unexpected error occurred", "error": str(e)}), 500
 
-@thresholds_bp.route('/thresholds', methods=['GET'])
+@thresholds_bp.route('', methods=['GET'])
 @jwt_required()
 def get_thresholds():
     user_id = get_jwt_identity()
@@ -47,7 +47,7 @@ def get_thresholds():
         } for t in thresholds
     ])
 
-@thresholds_bp.route('/thresholds/<int:id>', methods=['PUT'])
+@thresholds_bp.route('/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_threshold(id):
     user_id = get_jwt_identity()
@@ -69,7 +69,7 @@ def update_threshold(id):
         db.session.rollback()
         return jsonify({"msg": "An unexpected error occurred", "error": str(e)}), 500
 
-@thresholds_bp.route('/thresholds/<int:id>', methods=['DELETE'])
+@thresholds_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_threshold(id):
     user_id = get_jwt_identity()

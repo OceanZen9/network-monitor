@@ -122,22 +122,27 @@ export interface UpdateThresholdPayload {
 }
 
 export const getThresholds = async (): Promise<Threshold[]> => {
-  const response = await apiClient.get('/thresholds');
+  const response = await apiClient.get("/api/thresholds");
   return response.data;
 };
 
-export const createThreshold = async (payload: CreateThresholdPayload): Promise<{ msg: string; id: number }> => {
-  const response = await apiClient.post('/thresholds', payload);
+export const createThreshold = async (
+  payload: CreateThresholdPayload
+): Promise<{ msg: string; id: number }> => {
+  const response = await apiClient.post("/api/thresholds", payload);
   return response.data;
 };
 
-export const updateThreshold = async (id: number, payload: UpdateThresholdPayload): Promise<{ msg: string }> => {
-  const response = await apiClient.put(`/thresholds/${id}`, payload);
+export const updateThreshold = async (
+  id: number,
+  payload: UpdateThresholdPayload
+): Promise<{ msg: string }> => {
+  const response = await apiClient.put(`/api/thresholds/${id}`, payload);
   return response.data;
 };
 
 export const deleteThreshold = async (id: number): Promise<{ msg: string }> => {
-  const response = await apiClient.delete(`/thresholds/${id}`);
+  const response = await apiClient.delete(`/api/thresholds/${id}`);
   return response.data;
 };
 
