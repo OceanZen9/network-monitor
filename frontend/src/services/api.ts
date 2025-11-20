@@ -102,4 +102,44 @@ export const register = async (username: string, password: string) => {
   }
 };
 
+// --- Threshold API Functions ---
+
+export interface Threshold {
+  id: number;
+  metric: string;
+  value: number;
+  is_enabled: boolean;
+}
+
+export interface CreateThresholdPayload {
+  metric: string;
+  value: number;
+}
+
+export interface UpdateThresholdPayload {
+  value?: number;
+  is_enabled?: boolean;
+}
+
+export const getThresholds = async (): Promise<Threshold[]> => {
+  const response = await apiClient.get('/thresholds');
+  return response.data;
+};
+
+export const createThreshold = async (payload: CreateThresholdPayload): Promise<{ msg: string; id: number }> => {
+  const response = await apiClient.post('/thresholds', payload);
+  return response.data;
+};
+
+export const updateThreshold = async (id: number, payload: UpdateThresholdPayload): Promise<{ msg: string }> => {
+  const response = await apiClient.put(`/thresholds/${id}`, payload);
+  return response.data;
+};
+
+export const deleteThreshold = async (id: number): Promise<{ msg: string }> => {
+  const response = await apiClient.delete(`/thresholds/${id}`);
+  return response.data;
+};
+
+
 export default apiClient;

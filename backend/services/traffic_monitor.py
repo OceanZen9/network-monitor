@@ -1,14 +1,51 @@
 import psutil
 import time
+from collections import defaultdict
 from extensions import socketio, db
 import extensions as ext
-from models import Traffic
+from models import Traffic, Threshold
 from flask import current_app
+
+def check_and_notify_thresholds(rates):
+    """
+    Checks traffic rates against active thresholds and sends notifications.
+    """
+    try:
+        active_thresholds = Threshold.query.filter_by(is_enabled=True).all()
+        if not active_thresholds:
+            return
+
+        # Group thresholds by metric for efficient checking
+        thresholds_by_metric = defaultdict(list)
+        for t in active_thresholds:
+            thresholds_by_metric[t.metric].append(t)
+
+        for rate_info in rates:
+            for metric, current_value in rate_info.items():
+                if metric in thresholds_by_metric:
+                    for threshold in thresholds_by_metric[metric]:
+                        if current_value > threshold.value:
+                            # Threshold breached, send notification to the user's room
+                            message = (
+                                f"Alert: {metric} on interface {rate_info.get('interface', 'N/A')} "
+                                f"has exceeded the threshold. "
+                                f"Current: {current_value:.2f}, Threshold: {threshold.value:.2f}"
+                            )
+                            socketio.emit(
+                                'alert',
+                                {'message': message, 'level': 'warning'},
+                                room=threshold.user_id
+                            )
+                            # To avoid spamming, you might want to add a cooldown mechanism here
+                            # For now, it notifies on every check where the threshold is exceeded.
+
+    except Exception as e:
+        current_app.logger.error(f"Error checking thresholds: {e}")
+
 
 def get_traffic_rates():
     """
-    一个辅助函数，用于计算每秒的字节速率。
-    它会与全局的 ext._last_io_counters 进行比较
+    A helper function to calculate per-second byte rates.
     """
     current_counters = psutil.net_io_counters(pernic=True)
     current_time = time.time()
@@ -17,12 +54,15 @@ def get_traffic_rates():
     
     if not ext._last_io_counters:
         ext._last_io_counters = {"time": current_time, "counters": current_counters}
-        return []  # 第一次调用时没有速率数据
-    
+        return []
+
     prev_time = ext._last_io_counters["time"]
     prev_counters = ext._last_io_counters["counters"]
 
     time_diff = current_time - prev_time
+    if time_diff == 0:
+        return [] # Avoid division by zero
+
     for if_name, current_status in current_counters.items():
         if if_name in prev_counters and if_name != "lo0":
             prev_status = prev_counters[if_name]
@@ -38,28 +78,33 @@ def get_traffic_rates():
     ext._last_io_counters = {"time": current_time, "counters": current_counters}
     return rates
 
-def monitor_traffic_task(app): # accept app as argument
+def monitor_traffic_task(app):
     """
-    一个后台任务，定期获取流量数据并通过 WebSocket 发送给客户端，并保存到数据库
+    A background task that periodically fetches traffic data, saves it,
+    checks thresholds, and sends data via WebSocket.
     """
-    with app.app_context(): # Ensure we are in application context for DB operations
+    with app.app_context():
         while True:
             rates = get_traffic_rates()
             if rates:
-                # Save to database
+                # 1. Check for threshold breaches
+                check_and_notify_thresholds(rates)
+
+                # 2. Save to database
                 for rate in rates:
                     traffic_entry = Traffic(
                         interface=rate['interface'],
-                        bytes_sent=int(rate['bytes_sent_sec']), # Store as int
-                        bytes_recv=int(rate['bytes_recv_sec'])  # Store as int
+                        bytes_sent=int(rate['bytes_sent_sec']),
+                        bytes_recv=int(rate['bytes_recv_sec'])
                     )
                     db.session.add(traffic_entry)
                 try:
                     db.session.commit()
                 except Exception as e:
                     current_app.logger.error(f"Error saving traffic data to DB: {e}")
-                    db.session.rollback() # Rollback on error
+                    db.session.rollback()
 
-                # Emit via WebSocket
+                # 3. Emit traffic data via WebSocket
                 socketio.emit('traffic_data', {'rates': rates})
-            socketio.sleep(current_app.config.get('TRAFFIC_UPDATE_INTERVAL', 3)) # Use config for interval
+            
+            socketio.sleep(current_app.config.get('TRAFFIC_UPDATE_INTERVAL', 3))

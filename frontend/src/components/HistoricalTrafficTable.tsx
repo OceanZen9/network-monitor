@@ -34,7 +34,7 @@ const HistoricalTrafficTable: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await api.get('/history/traffic', {
+        const response = await api.get('/api/history/traffic', {
           params: {
             page: currentPage,
             per_page: pageSize,

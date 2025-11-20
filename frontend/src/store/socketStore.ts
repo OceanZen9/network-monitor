@@ -1,35 +1,38 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 
+interface AlertMessage {
+  message: string;
+  level: 'info' | 'warning' | 'error';
+  timestamp: number;
+}
+
 interface SocketStore {
   socket: Socket | null;
   isConnected: boolean;
+  alert: AlertMessage | null;
   connect: () => void;
   disconnect: () => void;
+  clearAlert: () => void;
 }
-
-let socketInstance: Socket | null = null;
 
 export const useSocketStore = create<SocketStore>((set, get) => ({
   socket: null,
   isConnected: false,
+  alert: null,
   connect: () => {
-    // ✅ 如果已有实例且已连接，直接返回
-    if (socketInstance?.connected) {
-      console.log("⚠️ Socket already connected, reusing instance");
-      set({ socket: socketInstance, isConnected: true });
+    if (get().socket?.connected) {
+      console.log("⚠️ Socket already connected.");
       return;
     }
 
-    // ✅ 如果有旧实例但未连接，清理它
-    if (socketInstance) {
-      console.log("🧹 Cleaning up old disconnected socket");
-      socketInstance.removeAllListeners();
-      socketInstance.disconnect();
-      socketInstance = null;
+    console.log("📡 Attempting to connect socket...");
+    
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        console.error("🔴 No auth token found, socket connection aborted.");
+        return;
     }
-
-    console.log("📡 Creating new socket connection to http://127.0.0.1:5000");
 
     const socket = io("http://127.0.0.1:5000", {
       transports: ["websocket", "polling"],
@@ -37,7 +40,14 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
+      // Pass auth token for backend verification
+      auth: {
+        token: token
+      }
     });
+
+    // Clear existing listeners before attaching new ones
+    socket.removeAllListeners();
 
     socket.on("connect", () => {
       console.log("✅ Socket connected:", socket.id);
@@ -53,17 +63,25 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       console.error("🔴 Socket connection error:", error.message);
       set({ isConnected: false });
     });
-    set({ socket, isConnected: false });
+
+    // Listen for custom 'alert' events from the backend
+    socket.on('alert', (data: { message: string, level: 'info' | 'warning' | 'error' }) => {
+        console.log(`🚨 ALERT RECEIVED: ${data.message}`);
+        set({ alert: { ...data, timestamp: Date.now() } });
+    });
+
+    set({ socket });
   },
   disconnect: () => {
-    const currentState = get();
-
-    if (currentState.socket) {
+    const { socket } = get();
+    if (socket) {
       console.log("🔌 Disconnecting socket...");
-      currentState.socket.removeAllListeners();
-      currentState.socket.disconnect();
+      socket.removeAllListeners();
+      socket.disconnect();
     }
-
     set({ socket: null, isConnected: false });
   },
+  clearAlert: () => {
+      set({ alert: null });
+  }
 }));

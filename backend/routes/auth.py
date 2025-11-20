@@ -20,8 +20,9 @@ def login():
     if user is None or not user.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
     
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    # Ensure identity is a string
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     return jsonify({
         "message": "Login successful",
         "user": user.to_dict(),
@@ -61,7 +62,8 @@ def logout():
 def refresh():
     """刷新访问令牌"""
     current_user_id = get_jwt_identity()
-    new_access_token = create_access_token(identity=current_user_id)
+    # Ensure identity is a string for the new token as well
+    new_access_token = create_access_token(identity=str(current_user_id))
     return jsonify({
         "access_token": new_access_token
     }), 200

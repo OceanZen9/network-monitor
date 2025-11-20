@@ -1,5 +1,4 @@
 import { Outlet } from "react-router-dom";
-
 import { Layout, Typography } from "antd";
 
 const { Header, Content, Footer } = Layout;

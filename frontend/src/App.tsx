@@ -8,25 +8,25 @@ import { useEffect } from "react";
 
 function App() {
   const isLoginedIn = Boolean(localStorage.getItem("access_token"));
-  const connect = useSocketStore((state) => state.connect);
-  const disconnect = useSocketStore((state) => state.disconnect);
+  // const connect = useSocketStore((state) => state.connect);
+  // const disconnect = useSocketStore((state) => state.disconnect);
 
-  useEffect(() => {
-    if (isLoginedIn) {
-      connect();
-    } else {
-      disconnect();
-    }
-  }, [isLoginedIn, connect, disconnect]);
+  // useEffect(() => {
+  //   if (isLoginedIn) {
+  //     connect();
+  //   } else {
+  //     disconnect();
+  //   }
+  // }, [isLoginedIn]);
 
   return (
     <Routes>
       <Route path="/login" element={<UserLoginPage />} />
       <Route
         path="/"
-        element={isLoginedIn ? <DashBoard /> : <Navigate to="/login" />}
+        element={isLoginedIn ? <DashBoardLayout /> : <Navigate to="/login" />}
       >
-        <Route index element={<DashBoardLayout />} />
+        <Route index element={<DashBoard />} />
       </Route>
     </Routes>
   );

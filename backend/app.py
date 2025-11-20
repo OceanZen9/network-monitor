@@ -8,6 +8,7 @@ from models import User
 from routes.auth import auth_bp
 from routes.devices import devices_bp
 from routes.history import history_bp # Add this line
+from routes.thresholds import thresholds_bp
 from services.traffic_monitor import monitor_traffic_task # Add this line
 
 def create_app(config_name='default'):
@@ -31,6 +32,7 @@ def create_app(config_name='default'):
     app.register_blueprint(auth_bp)
     app.register_blueprint(devices_bp)
     app.register_blueprint(history_bp) # Add this line
+    app.register_blueprint(thresholds_bp)
 
      # 导入 WebSocket 事件处理
     with app.app_context():
