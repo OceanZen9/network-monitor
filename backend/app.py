@@ -7,6 +7,8 @@ from models import User
 # 导入蓝图
 from routes.auth import auth_bp
 from routes.devices import devices_bp
+from routes.history import history_bp # Add this line
+from services.traffic_monitor import monitor_traffic_task # Add this line
 
 def create_app(config_name='default'):
     app = Flask(__name__)
@@ -28,24 +30,29 @@ def create_app(config_name='default'):
     # 注册蓝图
     app.register_blueprint(auth_bp)
     app.register_blueprint(devices_bp)
+    app.register_blueprint(history_bp) # Add this line
 
      # 导入 WebSocket 事件处理
     with app.app_context():
         import routes.monitoring
 
-        # 自动创建表和默认用户
-        db.create_all()
-        if not User.query.filter_by(username="admin").first():
-            print("⚠️  Creating default user: admin / 123456")
-            user = User(username="admin")
-            user.set_password("123456")
-            db.session.add(user)
-            db.session.commit()
+        try:
+            if not User.query.filter_by(username="admin").first():
+                print("⚠️  Creating default user: admin / 123456")
+                user = User(username="admin")
+                user.set_password("123456")
+                db.session.add(user)
+                db.session.commit()
+        except Exception as e:
+            # 捕获表不存在的错误（例如首次启动未迁移时），避免应用崩溃
+            print(f"⚠️  Database not initialized. Run 'flask db upgrade' first. Error: {e}")
 
     return app
 
 if __name__ == '__main__':
     app = create_app('development')
+    
+    socketio.start_background_task(target=monitor_traffic_task, app=app)
     
     print("=" * 60)
     print("🚀 Starting Network Monitor Server")

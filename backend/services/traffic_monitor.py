@@ -1,7 +1,9 @@
 import psutil
 import time
-from extensions import socketio
+from extensions import socketio, db
 import extensions as ext
+from models import Traffic
+from flask import current_app
 
 def get_traffic_rates():
     """
@@ -36,12 +38,28 @@ def get_traffic_rates():
     ext._last_io_counters = {"time": current_time, "counters": current_counters}
     return rates
 
-def monitor_traffic_task():
+def monitor_traffic_task(app): # accept app as argument
     """
-    一个后台任务，定期获取流量数据并通过 WebSocket 发送给客户端
+    一个后台任务，定期获取流量数据并通过 WebSocket 发送给客户端，并保存到数据库
     """
-    while True:
-        rates = get_traffic_rates()
-        if rates:
-            socketio.emit('traffic_data', {'rates': rates})
-        socketio.sleep(3)  # 每 1 秒更新一次
+    with app.app_context(): # Ensure we are in application context for DB operations
+        while True:
+            rates = get_traffic_rates()
+            if rates:
+                # Save to database
+                for rate in rates:
+                    traffic_entry = Traffic(
+                        interface=rate['interface'],
+                        bytes_sent=int(rate['bytes_sent_sec']), # Store as int
+                        bytes_recv=int(rate['bytes_recv_sec'])  # Store as int
+                    )
+                    db.session.add(traffic_entry)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    current_app.logger.error(f"Error saving traffic data to DB: {e}")
+                    db.session.rollback() # Rollback on error
+
+                # Emit via WebSocket
+                socketio.emit('traffic_data', {'rates': rates})
+            socketio.sleep(current_app.config.get('TRAFFIC_UPDATE_INTERVAL', 3)) # Use config for interval
