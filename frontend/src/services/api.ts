@@ -5,10 +5,7 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const apiClient = axios.create({
-  baseURL: "http://127.0.0.1:5000/",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: "http://127.0.0.1:5000",
 });
 
 // 请求拦截器
@@ -145,6 +142,5 @@ export const deleteThreshold = async (id: number): Promise<{ msg: string }> => {
   const response = await apiClient.delete(`/api/thresholds/${id}`);
   return response.data;
 };
-
 
 export default apiClient;
