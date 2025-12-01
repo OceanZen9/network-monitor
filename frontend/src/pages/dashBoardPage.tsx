@@ -3,14 +3,24 @@ import GetSniff from "@/components/getSniff";
 import RealtimeTrafficChart from "@/components/RealtimeTrafficChart";
 import HistoricalTrafficTable from "@/components/HistoricalTrafficTable"; // Import the new component
 import ThresholdSettings from "@/components/ThresholdSettings"; // Import the threshold component
-import { Tabs } from "antd";
+import ProtocolDistributionChart from "@/components/ProtocolDistributionChart"; // Import the protocol chart
+import { Tabs, Row, Col } from "antd";
 
 function DashBoard() {
   const items = [
     {
       key: "1",
       label: "Real-time Traffic",
-      children: <RealtimeTrafficChart />,
+      children: (
+        <Row gutter={16}>
+          <Col span={16}>
+            <RealtimeTrafficChart />
+          </Col>
+          <Col span={8}>
+            <ProtocolDistributionChart />
+          </Col>
+        </Row>
+      ),
     },
     {
       key: "2",

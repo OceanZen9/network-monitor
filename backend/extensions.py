@@ -16,3 +16,4 @@ _traffic_monitoring_task = None
 _packet_monitoring_task = None
 _packet_count = 0
 _packet_print_interval = 100
+_protocol_counts = {}
