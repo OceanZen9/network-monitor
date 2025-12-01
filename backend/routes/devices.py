@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify
 import psutil
 
-devices_bp = Blueprint('devices', __name__, url_prefix='/api/devices')
+devices_bp = Blueprint('devices', __name__)
 
-@devices_bp.route('', methods=['GET'])
+@devices_bp.route('/', methods=['GET'])
 def api_get_devices():
     """获取所有网络设备列表"""
     print("LOG: /api/devices was hit")
@@ -16,7 +16,7 @@ def api_get_devices():
             if addr.family == 2:
                 ip_address = addr.address
                 break
-        
+
         if ip_address and if_name != "lo0":
             real_devices.append({
                 "id": if_name,

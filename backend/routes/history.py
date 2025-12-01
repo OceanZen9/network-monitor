@@ -3,7 +3,7 @@ from models import Traffic
 from extensions import db
 from datetime import datetime, timezone
 
-history_bp = Blueprint('history', __name__, url_prefix='/api/history')
+history_bp = Blueprint('history', __name__)
 
 @history_bp.route('/traffic', methods=['GET'])
 def get_historical_traffic():
@@ -43,3 +43,4 @@ def get_historical_traffic():
         "has_next": pagination.has_next,
         "has_prev": pagination.has_prev
     })
+

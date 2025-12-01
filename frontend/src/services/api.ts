@@ -143,4 +143,31 @@ export const deleteThreshold = async (id: number): Promise<{ msg: string }> => {
   return response.data;
 };
 
+// --- Alert API Functions ---
+
+export interface Alert {
+  id: number;
+  user_id: number;
+  message: string;
+  level: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export const getAlerts = async (): Promise<Alert[]> => {
+  const response = await apiClient.get("/api/alerts");
+  return response.data;
+};
+
+export const markAlertAsRead = async (alertId: number): Promise<Alert> => {
+  const response = await apiClient.post(`/api/alerts/${alertId}/mark-read`);
+  return response.data;
+};
+
+export const markAllAlertsAsRead = async (): Promise<{ msg: string }> => {
+  const response = await apiClient.post("/api/alerts/mark-all-read");
+  return response.data;
+};
+
 export default apiClient;
+

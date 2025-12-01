@@ -16,7 +16,14 @@ const ProtocolDistributionChart = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleProtocolCounts = (protocolInfo: { counts: Record<string, number> }) => {
+    const handleProtocolCounts = (protocolInfo: { 
+      counts: Record<string, number>,
+      percentages: Record<string, number> 
+    }) => {
+      if (!protocolInfo || !protocolInfo.counts) {
+        setData([]);
+        return;
+      }
       const protocolData = Object.entries(protocolInfo.counts).map(([key, value]) => ({
         type: key,
         value: value,
@@ -37,21 +44,18 @@ const ProtocolDistributionChart = () => {
     angleField: 'value',
     colorField: 'type',
     radius: 0.9,
-    label: {
-      type: 'inner',
-      offset: '-30%',
-      content: '{percentage}',
-      style: {
-        fontSize: 14,
-        textAlign: 'center',
+    interactions: [{ type: 'element-active' }],
+    // Add a tooltip
+    tooltip: {
+      formatter: (datum: ProtocolData) => {
+        return { name: datum.type, value: `${datum.value} packets` };
       },
     },
-    interactions: [{ type: 'element-active' }],
   };
 
   return (
     <Card title="协议分布">
-      <Pie {...config} />
+      {data.length > 0 ? <Pie {...config} /> : 'No data to display'}
     </Card>
   );
 };

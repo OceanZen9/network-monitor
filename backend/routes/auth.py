@@ -5,7 +5,7 @@ from models import User
 from extensions import db
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -19,7 +19,7 @@ def login():
 
     if user is None or not user.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
-    
+
     # Ensure identity is a string
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
@@ -40,10 +40,10 @@ def register():
 
     if not username or not password:
         return jsonify({"error": "Username and password are required"}), 400
-    
+
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
-    
+
     user = User(username=username)
     user.set_password(password)
 
@@ -67,3 +67,4 @@ def refresh():
     return jsonify({
         "access_token": new_access_token
     }), 200
+

@@ -3,9 +3,9 @@ from models import Threshold
 from extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-thresholds_bp = Blueprint('thresholds_bp', __name__, url_prefix='/api/thresholds')
+thresholds_bp = Blueprint('thresholds_bp', __name__)
 
-@thresholds_bp.route('', methods=['POST'])
+@thresholds_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_threshold():
     data = request.get_json()
@@ -32,12 +32,12 @@ def create_threshold():
         db.session.rollback()
         return jsonify({"msg": "An unexpected error occurred", "error": str(e)}), 500
 
-@thresholds_bp.route('', methods=['GET'])
+@thresholds_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_thresholds():
     user_id = get_jwt_identity()
     thresholds = Threshold.query.filter_by(user_id=user_id).all()
-    
+
     return jsonify([
         {
             "id": t.id,
@@ -52,15 +52,15 @@ def get_thresholds():
 def update_threshold(id):
     user_id = get_jwt_identity()
     threshold = Threshold.query.filter_by(id=id, user_id=user_id).first_or_404()
-    
+
     data = request.get_json()
-    
+
     try:
         if 'value' in data:
             threshold.value = float(data['value'])
         if 'is_enabled' in data:
             threshold.is_enabled = bool(data['is_enabled'])
-        
+
         db.session.commit()
         return jsonify({"msg": "Threshold updated successfully"})
     except (ValueError, TypeError):
@@ -74,7 +74,7 @@ def update_threshold(id):
 def delete_threshold(id):
     user_id = get_jwt_identity()
     threshold = Threshold.query.filter_by(id=id, user_id=user_id).first_or_404()
-    
+
     try:
         db.session.delete(threshold)
         db.session.commit()
@@ -82,3 +82,4 @@ def delete_threshold(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "An unexpected error occurred", "error": str(e)}), 500
+

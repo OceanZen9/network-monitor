@@ -3,44 +3,66 @@ import time
 from collections import defaultdict
 from extensions import socketio, db
 import extensions as ext
-from models import Traffic, Threshold
+from models import Traffic, Threshold, Alert # Import Alert
 from flask import current_app
+
+# Cooldown period in seconds (e.g., 5 minutes)
+ALERT_COOLDOWN_SECONDS = 300
 
 def check_and_notify_thresholds(rates):
     """
-    Checks traffic rates against active thresholds and sends notifications.
+    Checks traffic rates against active thresholds, saves alerts to the DB,
+    and sends notifications with a cooldown mechanism.
     """
     try:
         active_thresholds = Threshold.query.filter_by(is_enabled=True).all()
         if not active_thresholds:
             return
 
-        # Group thresholds by metric for efficient checking
         thresholds_by_metric = defaultdict(list)
         for t in active_thresholds:
             thresholds_by_metric[t.metric].append(t)
+
+        current_time = time.time()
 
         for rate_info in rates:
             for metric, current_value in rate_info.items():
                 if metric in thresholds_by_metric:
                     for threshold in thresholds_by_metric[metric]:
                         if current_value > threshold.value:
-                            # Threshold breached, send notification to the user's room
-                            message = (
-                                f"Alert: {metric} on interface {rate_info.get('interface', 'N/A')} "
-                                f"has exceeded the threshold. "
-                                f"Current: {current_value:.2f}, Threshold: {threshold.value:.2f}"
-                            )
-                            socketio.emit(
-                                'alert',
-                                {'message': message, 'level': 'warning'},
-                                room=threshold.user_id
-                            )
-                            # To avoid spamming, you might want to add a cooldown mechanism here
-                            # For now, it notifies on every check where the threshold is exceeded.
+                            last_alert_time = ext._alert_cooldowns.get(threshold.id, 0)
+                            
+                            if current_time - last_alert_time > ALERT_COOLDOWN_SECONDS:
+                                # --- Threshold breached and not in cooldown ---
+                                
+                                message = (
+                                    f"Alert: {metric} on interface {rate_info.get('interface', 'N/A')} "
+                                    f"has exceeded the threshold. "
+                                    f"Current: {current_value:.2f}, Threshold: {threshold.value:.2f}"
+                                )
+                                
+                                # 1. Save alert to database
+                                new_alert = Alert(
+                                    user_id=threshold.user_id,
+                                    message=message,
+                                    level='warning' # or derive from threshold
+                                )
+                                db.session.add(new_alert)
+                                # Note: We will commit along with traffic data in the main loop.
+                                
+                                # 2. Send real-time notification
+                                socketio.emit(
+                                    'alert',
+                                    {'message': message, 'level': 'warning'},
+                                    room=threshold.user_id
+                                )
+                                
+                                # 3. Update cooldown timestamp
+                                ext._alert_cooldowns[threshold.id] = current_time
 
     except Exception as e:
         current_app.logger.error(f"Error checking thresholds: {e}")
+        db.session.rollback() # Rollback in case of error during alert creation
 
 
 def get_traffic_rates():
@@ -87,10 +109,10 @@ def monitor_traffic_task(app):
         while True:
             rates = get_traffic_rates()
             if rates:
-                # 1. Check for threshold breaches
+                # 1. Check for threshold breaches (now also saves alerts)
                 check_and_notify_thresholds(rates)
 
-                # 2. Save to database
+                # 2. Save traffic data to database
                 for rate in rates:
                     traffic_entry = Traffic(
                         interface=rate['interface'],
@@ -98,10 +120,12 @@ def monitor_traffic_task(app):
                         bytes_recv=int(rate['bytes_recv_sec'])
                     )
                     db.session.add(traffic_entry)
+                
                 try:
+                    # Commit both traffic data and any new alerts
                     db.session.commit()
                 except Exception as e:
-                    current_app.logger.error(f"Error saving traffic data to DB: {e}")
+                    current_app.logger.error(f"Error saving data to DB: {e}")
                     db.session.rollback()
 
                 # 3. Emit traffic data via WebSocket
