@@ -12,12 +12,20 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     """用户登录"""
     data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
 
+    print(f"DEBUG LOGIN: username='{username}', password_len={len(password)}")
+
+    print(f"DEBUG LOGIN: Received username={username}")
     user = User.query.filter_by(username=username).first()
 
-    if user is None or not user.check_password(password):
+    if user is None:
+        print("DEBUG LOGIN: User not found in DB")
+        return jsonify({"error": "Invalid username or password"}), 401
+    
+    if not user.check_password(password):
+        print("DEBUG LOGIN: Password check failed")
         return jsonify({"error": "Invalid username or password"}), 401
 
     # Ensure identity is a string
@@ -35,7 +43,7 @@ def login():
 def register():
     """用户注册"""
     data = request.get_json()
-    username = data.get("username")
+    username = data.get("username", "").strip()
     password = data.get("password")
 
     if not username or not password:
@@ -44,6 +52,7 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
 
+    print(f"DEBUG REGISTER: Creating user={username}")
     user = User(username=username)
     user.set_password(password)
 

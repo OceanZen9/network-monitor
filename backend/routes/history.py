@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 history_bp = Blueprint('history', __name__)
 
-@history_bp.route('/traffic', methods=['GET'])
+@history_bp.route('/traffic', methods=['GET'], strict_slashes=False)
 def get_historical_traffic():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)

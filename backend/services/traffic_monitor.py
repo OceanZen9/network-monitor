@@ -1,18 +1,22 @@
 import psutil
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from extensions import socketio, db
 import extensions as ext
-from models import Traffic, Threshold, Alert # Import Alert
+from models import Traffic, Threshold
 from flask import current_app
+from services.alert_manager import AlertManager
 
 # Cooldown period in seconds (e.g., 5 minutes)
 ALERT_COOLDOWN_SECONDS = 300
+WINDOW_SIZE_SECONDS = 30
+
+# History storage: interface -> metric -> deque([(timestamp, value), ...])
+_rate_history = defaultdict(lambda: defaultdict(deque))
 
 def check_and_notify_thresholds(rates):
     """
-    Checks traffic rates against active thresholds, saves alerts to the DB,
-    and sends notifications with a cooldown mechanism.
+    Checks traffic rates against active thresholds using a sliding window average.
     """
     try:
         active_thresholds = Threshold.query.filter_by(is_enabled=True).all()
@@ -26,44 +30,65 @@ def check_and_notify_thresholds(rates):
         current_time = time.time()
 
         for rate_info in rates:
+            interface = rate_info.get('interface', 'unknown')
+            
+            # Update history and check thresholds for each metric present in rate_info
             for metric, current_value in rate_info.items():
+                if metric == 'interface':
+                    continue
+                
+                # 1. Update Sliding Window History
+                history_queue = _rate_history[interface][metric]
+                history_queue.append((current_time, current_value))
+                
+                # Remove old data points
+                while history_queue and history_queue[0][0] < current_time - WINDOW_SIZE_SECONDS:
+                    history_queue.popleft()
+                
+                # Calculate Average
+                if not history_queue:
+                    continue
+                    
+                total_value = sum(val for _, val in history_queue)
+                average_value = total_value / len(history_queue)
+
+                # 2. Check Thresholds against Average
                 if metric in thresholds_by_metric:
                     for threshold in thresholds_by_metric[metric]:
-                        if current_value > threshold.value:
+                        # Check if average exceeds threshold
+                        # AND we have enough data (optional: e.g. at least 5 seconds of data)
+                        # For now, immediate check on average is fine as prolonged window builds up.
+                        
+                        if average_value > threshold.value:
                             last_alert_time = ext._alert_cooldowns.get(threshold.id, 0)
                             
                             if current_time - last_alert_time > ALERT_COOLDOWN_SECONDS:
-                                # --- Threshold breached and not in cooldown ---
+                                # --- Threshold breached (Average) and not in cooldown ---
                                 
                                 message = (
-                                    f"Alert: {metric} on interface {rate_info.get('interface', 'N/A')} "
-                                    f"has exceeded the threshold. "
-                                    f"Current: {current_value:.2f}, Threshold: {threshold.value:.2f}"
+                                    f"Bottleneck Detected: {metric} on {interface} "
+                                    f"avg({WINDOW_SIZE_SECONDS}s): {average_value:.2f}, "
+                                    f"Threshold: {threshold.value:.2f}"
                                 )
                                 
-                                # 1. Save alert to database
-                                new_alert = Alert(
+                                # Use AlertManager
+                                # Determine level based on threshold or static for now
+                                # If average > 2 * threshold, maybe ERROR? For now keep simple.
+                                alert_level = 'error' if average_value > threshold.value * 2 else 'warning'
+                                
+                                AlertManager.send_alert(
                                     user_id=threshold.user_id,
                                     message=message,
-                                    level='warning' # or derive from threshold
-                                )
-                                db.session.add(new_alert)
-                                # Note: We will commit along with traffic data in the main loop.
-                                
-                                # 2. Send real-time notification
-                                socketio.emit(
-                                    'alert',
-                                    {'message': message, 'level': 'warning'},
-                                    room=threshold.user_id
+                                    level=alert_level
                                 )
                                 
-                                # 3. Update cooldown timestamp
+                                # Update cooldown
                                 ext._alert_cooldowns[threshold.id] = current_time
 
     except Exception as e:
         current_app.logger.error(f"Error checking thresholds: {e}")
-        db.session.rollback() # Rollback in case of error during alert creation
-
+        # No rollback needed here as AlertManager handles its own session/flush if needed,
+        # but the main loop handles the commit.
 
 def get_traffic_rates():
     """
@@ -109,7 +134,7 @@ def monitor_traffic_task(app):
         while True:
             rates = get_traffic_rates()
             if rates:
-                # 1. Check for threshold breaches (now also saves alerts)
+                # 1. Check for bottleneck/threshold breaches
                 check_and_notify_thresholds(rates)
 
                 # 2. Save traffic data to database
@@ -122,7 +147,7 @@ def monitor_traffic_task(app):
                     db.session.add(traffic_entry)
                 
                 try:
-                    # Commit both traffic data and any new alerts
+                    # Commit both traffic data and any newly created alerts (from AlertManager)
                     db.session.commit()
                 except Exception as e:
                     current_app.logger.error(f"Error saving data to DB: {e}")

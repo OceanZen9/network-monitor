@@ -3,7 +3,7 @@ import psutil
 
 devices_bp = Blueprint('devices', __name__)
 
-@devices_bp.route('/', methods=['GET'])
+@devices_bp.route('/', methods=['GET'], strict_slashes=False)
 def api_get_devices():
     """获取所有网络设备列表"""
     print("LOG: /api/devices was hit")
@@ -29,12 +29,57 @@ def api_get_devices():
 @devices_bp.route('/<device_id>', methods=['GET'])
 def get_device_detail(device_id):
     """获取特定设备详情"""
-    # TODO: 实现设备详情获取
-    return jsonify({"device_id": device_id, "status": "coming soon"}), 501
+    try:
+        stats = psutil.net_if_stats()
+        addrs = psutil.net_if_addrs()
+        
+        if device_id not in stats:
+             return jsonify({"error": "Device not found"}), 404
 
+        device_stat = stats[device_id]
+        device_addrs = addrs.get(device_id, [])
+        
+        ip_address = "N/A"
+        for addr in device_addrs:
+             if addr.family == 2: # AF_INET
+                 ip_address = addr.address
+                 break
+
+        return jsonify({
+            "id": device_id,
+            "name": device_id,
+            "ip": ip_address,
+            "is_up": device_stat.isup,
+            "speed": device_stat.speed,
+            "mtu": device_stat.mtu,
+            "duplex": device_stat.duplex
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @devices_bp.route('/<device_id>/stats', methods=['GET'])
 def get_device_stats(device_id):
     """获取设备统计信息"""
-    # TODO: 实现设备统计
-    return jsonify({"device_id": device_id, "stats": {}}), 501
+    try:
+        io_counters = psutil.net_io_counters(pernic=True)
+        
+        if device_id not in io_counters:
+            return jsonify({"error": "Device not found"}), 404
+
+        counters = io_counters[device_id]
+        
+        return jsonify({
+            "device_id": device_id,
+            "stats": {
+                "bytes_sent": counters.bytes_sent,
+                "bytes_recv": counters.bytes_recv,
+                "packets_sent": counters.packets_sent,
+                "packets_recv": counters.packets_recv,
+                "errin": counters.errin,
+                "errout": counters.errout,
+                "dropin": counters.dropin,
+                "dropout": counters.dropout
+            }
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

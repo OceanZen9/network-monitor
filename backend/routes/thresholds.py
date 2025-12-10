@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 thresholds_bp = Blueprint('thresholds_bp', __name__)
 
-@thresholds_bp.route('/', methods=['POST'])
+@thresholds_bp.route('/', methods=['POST'], strict_slashes=False)
 @jwt_required()
 def create_threshold():
     data = request.get_json()
@@ -32,7 +32,7 @@ def create_threshold():
         db.session.rollback()
         return jsonify({"msg": "An unexpected error occurred", "error": str(e)}), 500
 
-@thresholds_bp.route('/', methods=['GET'])
+@thresholds_bp.route('/', methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_thresholds():
     user_id = get_jwt_identity()

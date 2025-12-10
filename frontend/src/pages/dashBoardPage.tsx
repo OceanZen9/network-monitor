@@ -4,6 +4,7 @@ import RealtimeTrafficChart from "@/components/RealtimeTrafficChart";
 import HistoricalTrafficTable from "@/components/HistoricalTrafficTable"; // Import the new component
 import ThresholdSettings from "@/components/ThresholdSettings"; // Import the threshold component
 import ProtocolDistributionChart from "@/components/ProtocolDistributionChart"; // Import the protocol chart
+import SystemHealthPanel from "@/components/SystemHealthPanel"; // Import SystemHealthPanel
 import { Tabs, Row, Col } from "antd";
 
 function DashBoard() {
@@ -12,14 +13,17 @@ function DashBoard() {
       key: "1",
       label: "Real-time Traffic",
       children: (
-        <Row gutter={16}>
-          <Col span={16}>
-            <RealtimeTrafficChart />
-          </Col>
-          <Col span={8}>
-            <ProtocolDistributionChart />
-          </Col>
-        </Row>
+        <>
+            <SystemHealthPanel />
+            <Row gutter={16}>
+              <Col span={16}>
+                <RealtimeTrafficChart />
+              </Col>
+              <Col span={8}>
+                <ProtocolDistributionChart />
+              </Col>
+            </Row>
+        </>
       ),
     },
     {

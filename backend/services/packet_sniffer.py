@@ -63,4 +63,8 @@ def monitor_packets_task():
         # 开始嗅探
         scapy.sniff(prn=packet_callback, store=False)
     except Exception as e:
-        print(f"Error in packet sniffing: {e}")
+        error_msg = str(e)
+        print(f"Error in packet sniffing: {error_msg}")
+        socketio.emit('sniffer_error', {'error': f"Sniffing Failed: {error_msg}"})
+        if "Permission denied" in error_msg:
+             socketio.emit('sniffer_error', {'error': "Permission Denied: Use 'sudo' to run backend"})
