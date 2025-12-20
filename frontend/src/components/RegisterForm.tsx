@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Form, Button, Input, message } from "antd";
 import { register } from "@/services/api";
+import { AxiosError } from "axios";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 interface RegisterFormProps {
@@ -10,6 +11,7 @@ interface RegisterFormProps {
 export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const [loading, setLoding] = useState(false);
   const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFinish = async (value: any) => {
@@ -17,11 +19,16 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
     try {
       await register(value.username, value.password);
-      message.success("注册成功！请登录。");
+      messageApi.success("注册成功！请登录。");
       form.resetFields();
       onSuccess();
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      message.error("注册失败。请尝试其他用户名。");
+    } catch (err) {
+      console.error("Register Error Caught:", err);
+      const error = err as AxiosError<{ error: string }>;
+      const errorMsg = error.response?.data?.error || "注册失败。请尝试其他用户名。";
+      console.log("Error Message to show:", errorMsg);
+      messageApi.error(errorMsg);
+      form.resetFields(); // Clear form on failure as requested
     } finally {
       setLoding(false);
     }
@@ -29,6 +36,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
   return (
     <Form name="register" onFinish={onFinish} layout="vertical" form={form}>
+      {contextHolder}
       <Form.Item
         name="username"
         rules={[{ required: true, message: "请输入您的用户名！" }]}
