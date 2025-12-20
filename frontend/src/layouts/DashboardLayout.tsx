@@ -17,7 +17,7 @@ function DashBoardLayout() {
   const { data: alerts } = useQuery<Alert[]>({
     queryKey: ['alerts'],
     queryFn: getAlerts,
-    refetchInterval: 30000, // Refetch alerts every 30 seconds
+    refetchInterval: 30000, // 每30秒刷新一次告警
   });
 
   const unreadAlertCount = alerts?.filter(alert => !alert.is_read).length || 0;
@@ -56,7 +56,7 @@ function DashBoardLayout() {
             </Badge>
           </Button>
           <Button type="primary" onClick={handleLogout}>
-            Logout
+            退出登录
           </Button>
         </Space>
       </Header>
@@ -75,11 +75,11 @@ function DashBoardLayout() {
       </Content>
 
       <Footer style={{ textAlign: "center" }}>
-        网络系统实践 ©{new Date().getFullYear()} Created by OceanZen
+        网络系统实践 ©{new Date().getFullYear()} 由 OceanZen 创建
       </Footer>
 
       <Modal
-        title="Alerts"
+        title="告警历史"
         open={isAlertModalVisible}
         onCancel={handleAlertModalCancel}
         footer={null}

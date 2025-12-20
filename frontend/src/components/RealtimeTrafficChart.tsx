@@ -29,17 +29,17 @@ export default function RealtimeTrafficChart() {
   >([]);
 
   useEffect(() => {
-    console.log("🔍 Chart: socket changed, isConnected:", isConnected);
+    console.log("🔍 图表: Socket 状态以改变, isConnected:", isConnected);
 
     if (!socket) {
-      console.warn("⚠️ Chart: No socket available");
+      console.warn("⚠️ 图表:无可用 Socket");
       return;
     }
 
-    console.log("👂 Chart: Setting up traffic_data listener");
+    console.log("👂 Chart: 正在设置 traffic_data 监听器");
 
     const handleTrafficData = (message: { rates: TrafficRate[] }) => {
-      console.log("📊 Chart: Received traffic data:", message);
+      // console.log("📊 Chart: Received traffic data:", message);
 
       const time = new Date().toLocaleTimeString();
       const detailedDataPoints: ChartsDataPoint[] = [];
@@ -52,12 +52,12 @@ export default function RealtimeTrafficChart() {
         detailedDataPoints.push({
           time: time,
           value: rate.bytes_sent_sec,
-          category: `${rate.interface} - Sent`,
+          category: `${rate.interface} - 发送`,
         });
         detailedDataPoints.push({
           time: time,
           value: rate.bytes_recv_sec,
-          category: `${rate.interface} - Received`,
+          category: `${rate.interface} - 接收`,
         });
       });
 
@@ -71,8 +71,8 @@ export default function RealtimeTrafficChart() {
       );
 
       const aggregatedDataPoints: ChartsDataPoint[] = [
-        { time, value: totalSent, category: "Total Sent" },
-        { time, value: totalRecv, category: "Total Received" },
+        { time, value: totalSent, category: "总发送" },
+        { time, value: totalRecv, category: "总接收" },
       ];
 
       // 更新详细流量数据
@@ -95,10 +95,10 @@ export default function RealtimeTrafficChart() {
     socket.on("traffic_data", handleTrafficData);
 
     return () => {
-      console.log("🧹 Chart: Cleaning up traffic_data listener");
+      console.log("🧹 图表: 清理 traffic_data 监听器");
       socket.off("traffic_data", handleTrafficData);
     };
-  }, [socket]);
+  }, [socket, isConnected]); // 添加 isConnected 依赖
 
   // 详细流量图表配置
   const detailedConfig = {
@@ -121,7 +121,7 @@ export default function RealtimeTrafficChart() {
     axis: {
       y: {
         title: {
-          text: "Bytes per Second",
+          text: "字节/秒",
         },
         labelFormatter: (v: number) => `${(v / 1024).toFixed(1)} KB/s`,
       },
@@ -143,7 +143,7 @@ export default function RealtimeTrafficChart() {
     axis: {
       y: {
         title: {
-          text: "Total Bytes per Second",
+          text: "总字节/秒",
         },
         labelFormatter: (v: number) => `${(v / 1024).toFixed(1)} KB/s`,
       },
@@ -158,33 +158,33 @@ export default function RealtimeTrafficChart() {
   if (!isConnected) {
     return (
       <div style={{ padding: "50px", textAlign: "center" }}>
-        <Spin tip="Connecting to real-time server..." size="large" />
+        <Spin tip="正在连接到实时服务器..." size="large" />
       </div>
     );
   }
   if (isConnected && aggregatedTrafficData.length === 0) {
     return (
       <div style={{ padding: "50px", textAlign: "center" }}>
-        <Empty description="No traffic data received yet." />
+        <Empty description="尚未收到流量数据。" />
       </div>
     );
   }
   return (
     <div>
-      <Title level={2}>Real-time Traffic Monitor</Title>
+      <Title level={2}>实时流量监控</Title>
 
       {/* 聚合流量图表 */}
-      <Card title="Total Network Traffic" style={{ marginBottom: 24 }}>
+      <Card title="总网络流量" style={{ marginBottom: 24 }}>
         <Line {...aggregatedConfig} />
       </Card>
 
       {/* 详细流量图表 */}
-      <Card title="Detailed Interface Traffic (Active Interfaces Only)">
+      <Card title="详细接口流量 (仅显示活动接口)">
         {detailedTrafficData.length > 0 ? (
           <Line {...detailedConfig} />
         ) : (
           <Empty
-            description="No active interfaces"
+            description="无活动接口"
             style={{ padding: "40px 0" }}
           />
         )}

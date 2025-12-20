@@ -13,7 +13,7 @@ const AlertManager: React.FC = () => {
   useEffect(() => {
     if (alert) {
       api[alert.level || 'info']({
-        message: 'System Alert',
+        message: '系统告警',
         description: alert.message,
         placement: 'topRight',
         duration: 5, // show for 5 seconds

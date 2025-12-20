@@ -51,7 +51,7 @@ const HistoricalTrafficTable: React.FC = () => {
           has_prev: response.data.has_prev,
         });
       } catch (err) {
-        setError('Failed to fetch historical traffic data.');
+        setError('获取历史流量数据失败。');
         console.error(err);
       } finally {
         setLoading(false);
@@ -68,24 +68,24 @@ const HistoricalTrafficTable: React.FC = () => {
       key: 'id',
     },
     {
-      title: 'Interface',
+      title: '接口',
       dataIndex: 'interface',
       key: 'interface',
     },
     {
-      title: 'Bytes Sent (per sec)',
+      title: '发送速率 (Bytes/s)',
       dataIndex: 'bytes_sent',
       key: 'bytes_sent',
       render: (text: number) => `${text} B/s`,
     },
     {
-      title: 'Bytes Received (per sec)',
+      title: '接收速率 (Bytes/s)',
       dataIndex: 'bytes_recv',
       key: 'bytes_recv',
       render: (text: number) => `${text} B/s`,
     },
     {
-      title: 'Created At',
+      title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
     },
@@ -99,16 +99,16 @@ const HistoricalTrafficTable: React.FC = () => {
   };
 
   if (loading) {
-    return <Spin tip="Loading historical data..." size="large" style={{ display: 'block', margin: '50px auto' }} />;
+    return <Spin tip="正在加载历史数据..." size="large" style={{ display: 'block', margin: '50px auto' }} />;
   }
 
   if (error) {
-    return <Alert message="Error" description={error} type="error" showIcon />;
+    return <Alert message="错误" description={error} type="error" showIcon />;
   }
 
   return (
     <Card style={{ margin: '20px 0' }}>
-      <Title level={4}>Historical Traffic Data</Title>
+      <Title level={4}>历史流量数据</Title>
       <Table
         columns={columns}
         dataSource={traffic}

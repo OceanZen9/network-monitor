@@ -48,14 +48,14 @@ const ProtocolDistributionChart = () => {
     // Add a tooltip
     tooltip: {
       formatter: (datum: ProtocolData) => {
-        return { name: datum.type, value: `${datum.value} packets` };
+        return { name: datum.type, value: `${datum.value} 数据包` };
       },
     },
   };
 
   return (
     <Card title="协议分布">
-      {data.length > 0 ? <Pie {...config} /> : 'No data to display'}
+      {data.length > 0 ? <Pie {...config} /> : '暂无数据显示'}
     </Card>
   );
 };

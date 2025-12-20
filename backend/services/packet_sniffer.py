@@ -1,8 +1,14 @@
-import scapy.all as scapy
-import extensions as ext
-from extensions import socketio
+"""
+数据包嗅探服务模块
+负责捕获网络数据包，分析协议，并通过WebSocket实时推送数据。
+"""
 from collections import defaultdict
-import time
+import scapy.all as scapy
+from extensions import socketio
+import extensions as ext
+
+# pylint: disable=no-member
+# pylint: disable=protected-access
 
 # 在 ext 中初始化 _protocol_counts
 ext._protocol_counts = defaultdict(int)
@@ -24,14 +30,14 @@ def packet_callback(packet):
     ext._packet_count += 1
     protocol = get_protocol_name(packet)
     ext._protocol_counts[protocol] += 1
-    
+
     try:
         summary = packet.summary()
         if summary:
             if ext._packet_count % ext._packet_print_interval == 0:
-                print(f"📦 Captured {ext._packet_count} packets (latest: {summary[:50]}...)")
+                print(f"📦 已捕获 {ext._packet_count} 个数据包 (最新: {summary[:50]}...)")
             socketio.emit('new_packet', {'summary': summary})
-    except Exception as e:
+    except Exception: # pylint: disable=broad-exception-caught
         # 减少不必要的日志
         pass
 
@@ -41,7 +47,7 @@ def send_protocol_counts_task():
         # 创建一个副本以避免在迭代期间修改
         counts_copy = dict(ext._protocol_counts)
         total_packets = sum(counts_copy.values())
-        
+
         if total_packets > 0:
             # 计算百分比
             percentages = {p: (c / total_packets) * 100 for p, c in counts_copy.items()}
@@ -50,7 +56,7 @@ def send_protocol_counts_task():
                 'percentages': percentages,
                 'total': total_packets
             })
-        
+
         socketio.sleep(3) # 每3秒发送一次
 
 def monitor_packets_task():
@@ -62,9 +68,9 @@ def monitor_packets_task():
         socketio.start_background_task(send_protocol_counts_task)
         # 开始嗅探
         scapy.sniff(prn=packet_callback, store=False)
-    except Exception as e:
+    except Exception as e: # pylint: disable=broad-exception-caught
         error_msg = str(e)
-        print(f"Error in packet sniffing: {error_msg}")
-        socketio.emit('sniffer_error', {'error': f"Sniffing Failed: {error_msg}"})
+        print(f"数据包嗅探出错: {error_msg}")
+        socketio.emit('sniffer_error', {'error': f"嗅探失败: {error_msg}"})
         if "Permission denied" in error_msg:
-             socketio.emit('sniffer_error', {'error': "Permission Denied: Use 'sudo' to run backend"})
+            socketio.emit('sniffer_error', {'error': "权限被拒绝: 请使用 'sudo' 运行后端"})

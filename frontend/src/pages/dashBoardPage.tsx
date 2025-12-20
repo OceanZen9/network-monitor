@@ -11,7 +11,7 @@ function DashBoard() {
   const items = [
     {
       key: "1",
-      label: "Real-time Traffic",
+      label: "实时流量",
       children: (
         <>
             <SystemHealthPanel />
@@ -28,22 +28,22 @@ function DashBoard() {
     },
     {
       key: "2",
-      label: "Device List",
+      label: "设备列表",
       children: <GetDevices />,
     },
     {
       key: "3",
-      label: "Sniff Packets",
+      label: "数据包嗅探",
       children: <GetSniff />,
     },
     {
       key: "4", // Add a new key for the historical data tab
-      label: "Historical Traffic",
+      label: "历史流量",
       children: <HistoricalTrafficTable />, // Render the new component here
     },
     {
       key: "5", // Add a new key for the threshold settings tab
-      label: "Threshold Settings",
+      label: "阈值设置",
       children: <ThresholdSettings />, // Render the new component here
     },
   ];

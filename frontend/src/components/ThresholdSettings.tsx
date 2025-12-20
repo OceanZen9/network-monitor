@@ -20,7 +20,7 @@ const ThresholdSettings: React.FC = () => {
       setThresholds(fetchedThresholds);
     } catch (err) {
       console.error("Failed to fetch thresholds:", err);
-      setError("Failed to load thresholds. Please try again.");
+      setError("加载阈值失败，请重试。");
     }
   }, []);
 
@@ -34,7 +34,7 @@ const ThresholdSettings: React.FC = () => {
     try {
       const value = parseFloat(newValue);
       if (isNaN(value)) {
-        setError("Invalid number format for value.");
+        setError("无效的数值格式。");
         return;
       }
       const newThresholdData = await createThreshold({
@@ -54,7 +54,7 @@ const ThresholdSettings: React.FC = () => {
       setNewValue("");
     } catch (err) {
       console.error("Failed to add threshold:", err);
-      setError("Failed to add threshold.");
+      setError("添加阈值失败。");
     }
   };
 
@@ -69,7 +69,7 @@ const ThresholdSettings: React.FC = () => {
       );
     } catch (err) {
       console.error("Failed to update threshold:", err);
-      setError("Failed to update threshold status.");
+      setError("更新阈值状态失败。");
     }
   };
 
@@ -80,13 +80,13 @@ const ThresholdSettings: React.FC = () => {
       setThresholds(thresholds.filter((t) => t.id !== id));
     } catch (err) {
       console.error("Failed to delete threshold:", err);
-      setError("Failed to delete threshold.");
+      setError("删除阈值失败。");
     }
   };
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h2>Threshold Settings</h2>
+      <h2>阈值设置</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -95,19 +95,19 @@ const ThresholdSettings: React.FC = () => {
           value={newMetric}
           onChange={(e) => setNewMetric(e.target.value)}
         >
-          <option value="bytes_sent_sec">Upload Speed (Bytes/s)</option>
-          <option value="bytes_recv_sec">Download Speed (Bytes/s)</option>
+          <option value="bytes_sent_sec">上传速度 (Bytes/s)</option>
+          <option value="bytes_recv_sec">下载速度 (Bytes/s)</option>
         </select>
         <input
           type="number"
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
-          placeholder="Value (e.g., 1048576 for 1 MB/s)"
+          placeholder="值 (例如: 1048576 代表 1 MB/s)"
           required
           style={{ marginLeft: "10px" }}
         />
         <button type="submit" style={{ marginLeft: "10px" }}>
-          Add Threshold
+          添加阈值
         </button>
       </form>
 
@@ -123,27 +123,27 @@ const ThresholdSettings: React.FC = () => {
             }}
           >
             <p>
-              <strong>Metric:</strong> {threshold.metric}
+              <strong>指标:</strong> {threshold.metric === 'bytes_sent_sec' ? '上传速度' : '下载速度'}
             </p>
             <p>
-              <strong>Value:</strong> {threshold.value.toLocaleString()} Bytes/s
+              <strong>阈值:</strong> {threshold.value.toLocaleString()} Bytes/s
             </p>
             <p>
-              <strong>Status:</strong>{" "}
-              {threshold.is_enabled ? "Enabled" : "Disabled"}
+              <strong>状态:</strong>{" "}
+              {threshold.is_enabled ? "已启用" : "已禁用"}
             </p>
             <button
               onClick={() =>
                 handleToggleEnable(threshold.id, threshold.is_enabled)
               }
             >
-              {threshold.is_enabled ? "Disable" : "Enable"}
+              {threshold.is_enabled ? "禁用" : "启用"}
             </button>
             <button
               onClick={() => handleDeleteThreshold(threshold.id)}
               style={{ marginLeft: "10px", color: "red" }}
             >
-              Delete
+              删除
             </button>
           </div>
         ))}

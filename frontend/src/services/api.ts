@@ -34,7 +34,7 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         if (!refreshToken) {
-          throw new Error("No refresh token available");
+          throw new Error("无可用刷新令牌");
         }
 
         // 请求新的访问令牌
@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        console.error("Session expired, redirecting to login...", refreshError);
+        console.error("会话已过期，正在重定向到登录页面...", refreshError);
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         window.location.href = "/login";
@@ -94,12 +94,12 @@ export const register = async (username: string, password: string) => {
   try {
     await apiClient.post("/api/auth/register", { username, password });
   } catch (error) {
-    console.error("Registration failed:", error);
+    console.error("注册失败:", error);
     throw error;
   }
 };
 
-// --- Threshold API Functions ---
+// --- 阈值 API 函数 ---
 
 export interface Threshold {
   id: number;
@@ -143,7 +143,7 @@ export const deleteThreshold = async (id: number): Promise<{ msg: string }> => {
   return response.data;
 };
 
-// --- Alert API Functions ---
+// --- 告警 API 函数 ---
 
 export interface Alert {
   id: number;

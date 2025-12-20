@@ -1,10 +1,9 @@
 // frontend/src/components/AlertHistory.tsx
-import { useState, useEffect } from 'react';
 import { List, Button, message, Space, Card, Tag, Popconfirm } from 'antd';
 import { getAlerts, markAlertAsRead, markAllAlertsAsRead } from '../services/api';
 import type { Alert } from '../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircleOutlined, BellOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, BellOutlined } from '@ant-design/icons';
 
 const AlertHistory = () => {
   const queryClient = useQueryClient();
@@ -16,41 +15,41 @@ const AlertHistory = () => {
   const markReadMutation = useMutation({
     mutationFn: (alertId: number) => markAlertAsRead(alertId),
     onSuccess: () => {
-      message.success('Alert marked as read');
+      message.success('告警已标记为已读');
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
     onError: (err) => {
-      message.error(`Failed to mark alert as read: ${err.message}`);
+      message.error(`标记告警为已读失败: ${err.message}`);
     },
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllAlertsAsRead,
     onSuccess: () => {
-      message.success('All alerts marked as read');
+      message.success('所有告警已标记为已读');
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
     onError: (err) => {
-      message.error(`Failed to mark all alerts as read: ${err.message}`);
+      message.error(`标记所有告警为已读失败: ${err.message}`);
     },
   });
 
-  if (isLoading) return <Card title="Alert History">Loading alerts...</Card>;
-  if (error) return <Card title="Alert History">Error: {error.message}</Card>;
+  if (isLoading) return <Card title="告警历史">正在加载告警...</Card>;
+  if (error) return <Card title="告警历史">错误: {error.message}</Card>;
 
   return (
     <Card
       title={
         <Space>
-          <BellOutlined /> Alert History
+          <BellOutlined /> 告警历史
         </Space>
       }
       extra={
         <Popconfirm
-          title="Mark all alerts as read?"
+          title="标记所有告警为已读?"
           onConfirm={() => markAllReadMutation.mutate()}
-          okText="Yes"
-          cancelText="No"
+          okText="是"
+          cancelText="否"
           disabled={!alerts || alerts.filter(a => !a.is_read).length === 0}
         >
           <Button
@@ -58,7 +57,7 @@ const AlertHistory = () => {
             disabled={!alerts || alerts.filter(a => !a.is_read).length === 0}
             icon={<CheckCircleOutlined />}
           >
-            Mark All Read
+            全部标为已读
           </Button>
         </Popconfirm>
       }
@@ -77,11 +76,11 @@ const AlertHistory = () => {
                   loading={markReadMutation.isPending && markReadMutation.variables === alert.id}
                   icon={<CheckCircleOutlined />}
                 >
-                  Mark Read
+                  标为已读
                 </Button>
               ) : (
                 <Button key="read" type="link" disabled icon={<CheckCircleOutlined />}>
-                  Read
+                  已读
                 </Button>
               ),
             ]}
@@ -92,7 +91,7 @@ const AlertHistory = () => {
                 <Space>
                   {alert.message}
                   <Tag color={alert.is_read ? 'green' : 'red'}>
-                    {alert.is_read ? 'Read' : 'Unread'}
+                    {alert.is_read ? '已读' : '未读'}
                   </Tag>
                 </Space>
               }

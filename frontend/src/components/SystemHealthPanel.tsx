@@ -12,7 +12,7 @@ const SystemHealthPanel: React.FC = () => {
     const { socket, isConnected } = useSocketStore();
     const [totalSent, setTotalSent] = useState(0);
     const [totalRecv, setTotalRecv] = useState(0);
-    const [status, setStatus] = useState<'Normal' | 'High Load' | 'Overload'>('Normal');
+    const [status, setStatus] = useState<'正常' | '高负载' | '过载'>('正常');
     const [lastAlert, setLastAlert] = useState<{message: string, level: string, time: number} | null>(null);
 
     // Auto-clear alert status after 30 seconds
@@ -22,7 +22,7 @@ const SystemHealthPanel: React.FC = () => {
                 const now = Date.now();
                 if (now - lastAlert.time > 30000) {
                     setLastAlert(null);
-                    setStatus('Normal'); 
+                    setStatus('正常'); 
                 }
             }, 5000); // Check every 5s
             return () => clearTimeout(timer);
@@ -44,11 +44,11 @@ const SystemHealthPanel: React.FC = () => {
                 // Example threshold: 10MB/s = 10 * 1024 * 1024
                 const totalTraffic = sent + recv;
                 if (totalTraffic > 10 * 1024 * 1024) {
-                    setStatus('Overload');
+                    setStatus('过载');
                 } else if (totalTraffic > 5 * 1024 * 1024) {
-                    setStatus('High Load');
+                    setStatus('高负载');
                 } else {
-                    setStatus('Normal');
+                    setStatus('正常');
                 }
             }
         };
@@ -59,7 +59,7 @@ const SystemHealthPanel: React.FC = () => {
                 level: message.level,
                 time: Date.now()
             });
-            setStatus('Overload'); // Assuming alerts mean bottleneck/error
+            setStatus('过载'); // Assuming alerts mean bottleneck/error
         };
 
         socket.on('traffic_data', handleTrafficData);
@@ -76,21 +76,21 @@ const SystemHealthPanel: React.FC = () => {
     }
 
     return (
-        <Card title="System Health & Load Status" size="small" style={{ marginBottom: 16 }}>
+        <Card title="系统健康与负载状态" size="small" style={{ marginBottom: 16 }}>
             <Row gutter={16} align="middle">
                 <Col span={6}>
                     <Statistic 
-                        title="System Status" 
+                        title="系统状态" 
                         value={status} 
                         valueStyle={{ 
-                            color: status === 'Normal' ? '#3f8600' : (status === 'High Load' ? '#faad14' : '#cf1322'),
+                            color: status === '正常' ? '#3f8600' : (status === '高负载' ? '#faad14' : '#cf1322'),
                             fontWeight: 'bold'
                         }}
                     />
                 </Col>
                 <Col span={6}>
                     <Statistic 
-                        title="Total Outgoing" 
+                        title="总发送速率" 
                         value={totalSent / 1024} 
                         precision={2} 
                         suffix="KB/s" 
@@ -98,7 +98,7 @@ const SystemHealthPanel: React.FC = () => {
                 </Col>
                 <Col span={6}>
                     <Statistic 
-                        title="Total Incoming" 
+                        title="总接收速率" 
                         value={totalRecv / 1024} 
                         precision={2} 
                         suffix="KB/s" 
@@ -107,14 +107,14 @@ const SystemHealthPanel: React.FC = () => {
                 <Col span={6}>
                      {lastAlert && (
                         <AntAlert
-                            message="Alert Active"
+                            message="活动告警"
                             description={lastAlert.message}
                             type={lastAlert.level === 'error' ? 'error' : 'warning'}
                             showIcon
                         />
                      )}
                      {!lastAlert && (
-                         <div style={{ color: '#8c8c8c', marginTop: 10 }}>No active alerts</div>
+                         <div style={{ color: '#8c8c8c', marginTop: 10 }}>无活动告警</div>
                      )}
                 </Col>
             </Row>

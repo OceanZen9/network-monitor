@@ -1,4 +1,7 @@
-# backend/extensions.py
+"""
+扩展模块
+此模块初始化Flask扩展并定义全局变量。
+"""
 from flask_socketio import SocketIO
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +14,7 @@ db = SQLAlchemy()
 jwt = JWTManager()
 
 # 全局变量
+# 注意：这些全局变量用于在不同的上下文之间共享状态
 _last_io_counters = {}
 _traffic_monitoring_task = None
 _packet_monitoring_task = None

@@ -1,16 +1,21 @@
+"""
+配置模块
+"""
 import os
+
 class Config:
     """
-    应用配置
+    通用应用配置
     """
     DEBUG = True
     CORS_ORIGINS = [
-        "http://localhost:5173", 
-        "http://localhost:5174", 
-        "http://127.0.0.1:5173", 
-        "http://127.0.0.1:5174"]
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
+    ]
     SOCKETIO_ASYNC_MODE = "threading"
-    
+
     # 数据库配置 使用SQLite
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
@@ -24,6 +29,7 @@ class Config:
     TRAFFIC_UPDATE_INTERVAL = 3  # 秒
     MAX_PACKETS_DISPLAY = 50
     PACKET_PRINT_INTERVAL = 100
+
 
 class DevelopmentConfig(Config):
     """开发环境配置"""

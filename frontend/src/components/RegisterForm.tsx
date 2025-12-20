@@ -11,16 +11,17 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const [loading, setLoding] = useState(false);
   const [form] = Form.useForm();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFinish = async (value: any) => {
     setLoding(true);
 
     try {
       await register(value.username, value.password);
-      message.success("Registration successful! Please log in.");
+      message.success("注册成功！请登录。");
       form.resetFields();
       onSuccess();
-    } catch (error) {
-      message.error("Registration failed. Try a different username.");
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      message.error("注册失败。请尝试其他用户名。");
     } finally {
       setLoding(false);
     }
@@ -30,28 +31,28 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
     <Form name="register" onFinish={onFinish} layout="vertical" form={form}>
       <Form.Item
         name="username"
-        rules={[{ required: true, message: "Please input your Username!" }]}
+        rules={[{ required: true, message: "请输入您的用户名！" }]}
       >
-        <Input prefix={<UserOutlined />} placeholder="Username" />
+        <Input prefix={<UserOutlined />} placeholder="用户名" />
       </Form.Item>
       <Form.Item
         name="password"
-        rules={[{ required: true, message: "Please input your Password!" }]}
+        rules={[{ required: true, message: "请输入您的密码！" }]}
       >
-        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+        <Input.Password prefix={<LockOutlined />} placeholder="密码" />
       </Form.Item>
       <Form.Item
         name="confirmPassword"
         dependencies={["password"]}
         rules={[
-          { required: true, message: "Please confirm your Password!" },
+          { required: true, message: "请确认您的密码！" },
           ({ getFieldValue }) => ({
             validator(_, value) {
               if (!value || getFieldValue("password") === value) {
                 return Promise.resolve();
               }
               return Promise.reject(
-                new Error("The two passwords do not match!")
+                new Error("两次输入的密码不一致！")
               );
             },
           }),
@@ -59,12 +60,12 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       >
         <Input.Password
           prefix={<LockOutlined />}
-          placeholder="Confirm Password"
+          placeholder="确认密码"
         />
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={loading} block>
-          Register
+          注册
         </Button>
       </Form.Item>
     </Form>

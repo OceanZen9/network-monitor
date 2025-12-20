@@ -34,7 +34,7 @@ function UserLoginPage() {
     <div style={layoutStyle}>
       <Card style={cardStyle} className="login-card">
         <h2 style={{ textAlign: "center", marginBottom: 24 }}>
-          Network Monitor
+          网络监控系统
         </h2>
         <Tabs
           activeKey={activeTab}

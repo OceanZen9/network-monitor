@@ -23,8 +23,8 @@ export const LoginForm = () => {
 
       // 重定向到主页
       window.location.href = "/";
-    } catch (error) {
-      message.error("Login failed. Check your credentials.");
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      message.error("登录失败。请检查您的凭据。");
     } finally {
       setLoding(false);
     }
@@ -34,19 +34,19 @@ export const LoginForm = () => {
     <Form name="login" onFinish={onFinish} layout="vertical">
       <Form.Item
         name="username"
-        rules={[{ required: true, message: "Please input your Username!" }]}
+        rules={[{ required: true, message: "请输入您的用户名！" }]}
       >
-        <Input prefix={<UserOutlined />} placeholder="Username" />
+        <Input prefix={<UserOutlined />} placeholder="用户名" />
       </Form.Item>
       <Form.Item
         name="password"
-        rules={[{ required: true, message: "Please input your Password!" }]}
+        rules={[{ required: true, message: "请输入您的密码！" }]}
       >
-        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+        <Input.Password prefix={<LockOutlined />} placeholder="密码" />
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={loading} block>
-          Log in
+          登录
         </Button>
       </Form.Item>
     </Form>
