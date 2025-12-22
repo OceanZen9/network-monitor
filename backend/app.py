@@ -32,7 +32,7 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
 
     # 初始化扩展
-    cors.init_app(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)
+    cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}}, supports_credentials=True)
     socketio.init_app(
         app,
         cors_allowed_origins=app.config['CORS_ORIGINS'],

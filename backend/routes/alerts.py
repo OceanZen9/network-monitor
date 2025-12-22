@@ -8,7 +8,7 @@ from models import Alert, User
 
 alerts_bp = Blueprint('alerts', __name__)
 
-@alerts_bp.route('/', methods=['GET'], strict_slashes=False)
+@alerts_bp.route('', methods=['GET'], strict_slashes=False)
 @jwt_required()
 def get_alerts():
     """
