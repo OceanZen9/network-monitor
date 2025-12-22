@@ -13,6 +13,7 @@ from routes.devices import devices_bp
 from routes.history import history_bp
 from routes.thresholds import thresholds_bp
 from routes.alerts import alerts_bp
+from routes.client_management import client_bp
 from routes import monitoring  # 导入 WebSocket 事件处理
 from services.traffic_monitor import monitor_traffic_task
 
@@ -48,6 +49,7 @@ def create_app(config_name='default'):
     app.register_blueprint(history_bp, url_prefix='/api/history')
     app.register_blueprint(thresholds_bp, url_prefix='/api/thresholds')
     app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
+    app.register_blueprint(client_bp, url_prefix='/api/clients')
 
     with app.app_context():
         # 确保 monitoring 模块被加载
@@ -75,8 +77,8 @@ if __name__ == '__main__':
     print("=" * 60)
     print("🚀 启动网络监控服务器")
     print("=" * 60)
-    print("📍 服务器地址: http://127.0.0.1:5000/")
+    print("📍 服务器地址: http://127.0.0.1:5001/")
     print("⚠️  注意: Scapy 可能需要 'sudo' 权限来进行数据包嗅探")
     print("=" * 60)
 
-    socketio.run(created_app, host='127.0.0.1', debug=True, port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(created_app, host='127.0.0.1', debug=True, port=5001, allow_unsafe_werkzeug=True)

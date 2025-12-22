@@ -58,6 +58,9 @@ function DashBoardLayout() {
           <Button type="primary" onClick={handleLogout}>
             退出登录
           </Button>
+          <Button onClick={() => navigate("/clients")}>
+             Clients
+          </Button>
         </Space>
       </Header>
 

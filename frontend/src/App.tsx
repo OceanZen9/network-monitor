@@ -1,5 +1,6 @@
 import DashBoardLayout from "@/layouts/DashboardLayout";
 import DashBoard from "@/pages/dashBoardPage";
+import ClientManagement from "@/pages/ClientManagement";
 import UserLoginPage from "@/pages/userLoginPage";
 import { useSocketStore } from "@/store/socketStore";
 
@@ -27,6 +28,7 @@ function App() {
         element={isLoginedIn ? <DashBoardLayout /> : <Navigate to="/login" />}
       >
         <Route index element={<DashBoard />} />
+        <Route path="clients" element={<ClientManagement />} />
       </Route>
     </Routes>
   );

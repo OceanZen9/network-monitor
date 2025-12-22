@@ -13,6 +13,25 @@ from services.traffic_monitor import monitor_traffic_task
 
 monitoring_bp = Blueprint('monitoring', __name__)
 
+@socketio.on('client_event')
+def handle_client_event(data):
+    """
+    接收来自 Agent (agent.py) 的状态事件
+    """
+    print(f"📡 收到分布式节点信号: {data}")
+    
+    event_type = data.get('type')
+    msg = data.get('msg')
+    
+    # 转发告警 (用于显示 Toast/Alert)
+    socketio.emit('alert', {
+        'level': 'info' if 'Start' in msg else 'warning',
+        'message': f"[{event_type}] {msg}"
+    })
+    
+    # 转发主机状态更新 (用于 Dashboard 实时更新)
+    socketio.emit('host_status', data)
+
 @socketio.on('connect')
 def handle_connect(auth=None):
     """

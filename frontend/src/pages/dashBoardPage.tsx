@@ -5,6 +5,7 @@ import HistoricalTrafficTable from "@/components/HistoricalTrafficTable"; // Imp
 import ThresholdSettings from "@/components/ThresholdSettings"; // Import the threshold component
 import ProtocolDistributionChart from "@/components/ProtocolDistributionChart"; // Import the protocol chart
 import SystemHealthPanel from "@/components/SystemHealthPanel"; // Import SystemHealthPanel
+import HostStatusPanel from "@/components/HostStatusPanel";
 import { Tabs, Row, Col } from "antd";
 
 function DashBoard() {
@@ -14,6 +15,7 @@ function DashBoard() {
       label: "实时流量",
       children: (
         <>
+            <HostStatusPanel />
             <SystemHealthPanel />
             <Row gutter={16}>
               <Col span={16}>
